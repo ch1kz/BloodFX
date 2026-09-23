@@ -76,7 +76,7 @@ function Drops:land(drop: Drop, hit: RaycastResult)
 	const scale = random:NextNumber(settings.MarkScale.Min, settings.MarkScale.Max)
 	const attached = if tagged(surface, settings.AttachTag) then surface else nil
 
-	self.marks:add(hit.Position, hit.Normal, drop.radius * scale, attached)
+	self.marks:add(hit.Position, hit.Normal, drop.velocity, drop.radius * scale, attached)
 end
 
 function Drops:remove(index: number)

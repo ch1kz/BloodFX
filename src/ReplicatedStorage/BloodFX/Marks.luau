@@ -23,6 +23,7 @@ const MIN_RADIUS = 0.02
 const MERGE_ALIGNMENT = 0.7
 const PLANE_TOLERANCE = 0.25
 const RIM_POINTS = 8
+const MAX_ELONGATION = 3
 const NO_MARKS: { Mark } = table.freeze({})
 
 const RIM: { Vector3 } = table.create(RIM_POINTS)
@@ -60,7 +61,7 @@ function Marks.new(pool, settings: Types.Config, params: RaycastParams)
 	}, Marks)
 end
 
-function Marks:add(position: Vector3, normal: Vector3, radius: number, surface: BasePart?)
+function Marks:add(position: Vector3, normal: Vector3, velocity: Vector3, radius: number, surface: BasePart?)
 	const settings = self.settings
 	const pooling = poolingOn(normal, settings.WallPooling, settings.CeilingPooling)
 	const reach = settings.MergeReach * pooling
@@ -82,7 +83,7 @@ function Marks:add(position: Vector3, normal: Vector3, radius: number, surface: 
 	if target then
 		self:grow(target, radius, pooling)
 	else
-		self:create(position, normal, radius, surface)
+		self:create(position, normal, velocity, radius, surface)
 	end
 end
 
@@ -97,26 +98,36 @@ function Marks:findOn(surface: BasePart, joins: (Mark) -> boolean): Mark?
 	return nil
 end
 
-function Marks:create(position: Vector3, normal: Vector3, radius: number, surface: BasePart?)
+function Marks:create(position: Vector3, normal: Vector3, velocity: Vector3, radius: number, surface: BasePart?)
 	const settings = self.settings
+
+	-- The velocity without its part into the surface is the way the drop skids. Head-on there is no
+	-- skid, so any tangent will do: the normal crossed with a random direction.
+	const skid = velocity - normal * velocity:Dot(normal)
+	const along = if skid.Magnitude > 1e-3 then skid.Unit else normal:Cross(random:NextUnitVector()).Unit
+
+	-- A stain's width over its length is the sine of the angle the drop came in at; that sine is the
+	-- share of the speed that went into the surface.
+	const sine = math.abs(velocity:Dot(normal)) / velocity.Magnitude
+	const elongation = math.min(1 / sine, MAX_ELONGATION)
 
 	const part = self.pool:take()
 
-	-- A mark is flat along X: point X along the normal and turn Y to a random tangent, which is
-	-- the normal crossed with any random direction.
-	part.CFrame = CFrame.fromMatrix(position, normal, normal:Cross(random:NextUnitVector()).Unit)
+	-- A mark is flat along X and long along Z. With X on the normal and Y across the skid,
+	-- Z = X x Y follows the skid.
+	part.CFrame = CFrame.fromMatrix(position, normal, along:Cross(normal))
 
 	const mark: Mark = {
 		part = part,
 		position = position,
 		normal = normal,
 		radius = math.min(radius, settings.MarkMaxRadius),
-		stretch = random:NextNumber(settings.MarkStretch.Min, settings.MarkStretch.Max),
+		stretch = elongation * random:NextNumber(settings.MarkStretch.Min, settings.MarkStretch.Max),
 		opened = START_SCALE,
 		age = 0,
 	}
 
-	while mark.radius > MIN_RADIUS and not self:supports(mark, mark.radius) do
+	while mark.radius > MIN_RADIUS and not self:supports(mark, mark.radius, mark.stretch) do
 		mark.radius /= 2
 	end
 
@@ -174,21 +185,28 @@ function Marks:grow(mark: Mark, radius: number, pooling: number)
 	const grown = math.sqrt(mark.radius ^ 2 + (radius * settings.MergeGrowth) ^ 2)
 	const capped = math.min(grown, settings.MarkMaxRadius * pooling)
 
-	if capped > mark.radius and self:supports(mark, capped) then mark.radius = capped end
+	-- The length gains what the width gains, so the first drop's streak keeps its length while the
+	-- pool rounds out around it.
+	const stretch = 1 + (mark.stretch - 1) * mark.radius / capped
+
+	if capped > mark.radius and self:supports(mark, capped, stretch) then
+		mark.radius = capped
+		mark.stretch = stretch
+	end
 
 	mark.age = 0
 	mark.part.Transparency = 0
 	self:resize(mark)
 end
 
-@native function Marks:supports(mark: Mark, radius: number): boolean
+@native function Marks:supports(mark: Mark, radius: number, stretch: number): boolean
 	const frame = mark.part.CFrame
 	const lift = mark.normal * PLANE_TOLERANCE
 
 	-- Each side is a unit direction across the mark; scaling it by the two radii lands it on the
 	-- oval's rim. A short ray through the plane there tells whether anything holds that edge up.
 	for _, side in RIM do
-		const edge = frame:PointToWorldSpace(side * Vector3.new(0, radius, radius * mark.stretch))
+		const edge = frame:PointToWorldSpace(side * Vector3.new(0, radius, radius * stretch))
 		if not workspace:Raycast(edge + lift, lift * -2, self.params) then return false end
 	end
 

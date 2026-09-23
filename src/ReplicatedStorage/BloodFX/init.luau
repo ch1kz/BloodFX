@@ -103,7 +103,8 @@ end
 function BloodFX.mark(position: Vector3, normal: Vector3, radius: number?)
 	if frozen then return end
 
-	marks:add(position, normal.Unit, radius or 0.25)
+	const unit = normal.Unit
+	marks:add(position, unit, -unit, radius or 0.25)
 end
 
 function BloodFX.emitter(origin: Origin, preset: (PresetName | Preset)?): Emitter

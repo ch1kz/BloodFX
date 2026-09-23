@@ -121,14 +121,14 @@ function Performance.benchmark(): string
 	settings.MaxMarks = math.huge
 
 	measure(timings, "Marks:add, new mark", 240, function(index)
-		marks:add(Vector3.new(index % 20 * 6 - 60, HEIGHT, index // 20 * 6 - 60), UP, 0.3)
+		marks:add(Vector3.new(index % 20 * 6 - 60, HEIGHT, index // 20 * 6 - 60), UP, -UP, 0.3)
 	end)
 	measure(timings, "Marks:add, joins a pool", 500, function()
-		marks:add(Vector3.new(0, HEIGHT, 100), UP, 0.12)
+		marks:add(Vector3.new(0, HEIGHT, 100), UP, -UP, 0.12)
 	end)
 
 	const sample = marks.list[1]
-	measure(timings, "Marks:supports, 8 rays", 1000, function() marks:supports(sample, sample.radius) end)
+	measure(timings, "Marks:supports, 8 rays", 1000, function() marks:supports(sample, sample.radius, sample.stretch) end)
 	measure(timings, "Marks:resize", 2000, function(index)
 		sample.opened = if index % 2 == 1 then 0.9 else 1
 		marks:resize(sample)

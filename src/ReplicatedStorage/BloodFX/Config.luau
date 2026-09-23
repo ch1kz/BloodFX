@@ -44,8 +44,9 @@ return table.freeze({
 	-- Mark radius as a multiple of the radius of the drop that made it. Default: 2 to 3.
 	MarkScale = NumberRange.new(2, 3),
 
-	-- Length of a mark against its width, so marks come out oval. Default: 0.7 to 1.35.
-	MarkStretch = NumberRange.new(0.7, 1.35),
+	-- A drop that lands at a slant leaves a mark stretched along its path. This random length
+	-- against width comes on top, so no mark is a perfect circle. Default: 0.85 to 1.2.
+	MarkStretch = NumberRange.new(0.85, 1.2),
 
 	-- Largest radius a pool grows to, in studs. Default: 2.5.
 	MarkMaxRadius = 2.5,
