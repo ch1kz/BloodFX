@@ -46,14 +46,19 @@ const configuration = if settings.DynamicSettings then Instance.new("Configurati
 
 const emitters: { Emitter } = {}
 
-const function resolve(preset: PresetName | Preset, overrides: Overrides?): Preset
+const function resolve(preset: PresetName | Preset, overrides: (Overrides | number)?): Preset
 	const base = if typeof(preset) == "string" then Presets[preset] else preset
 
 	if not base then error(`[BloodFX] unknown preset "{preset}"`, 3) end
 	if not overrides then return base end
 
 	const merged = table.clone(base)
-	for key, value in overrides do merged[key] = value end
+
+	if typeof(overrides) == "number" then
+		merged.count = overrides
+	else
+		for key, value in overrides do merged[key] = value end
+	end
 
 	return merged
 end
@@ -113,7 +118,7 @@ end
 
 const BloodFX = {}
 
-function BloodFX.spray(position: Vector3, direction: Vector3, preset: (PresetName | Preset)?, overrides: Overrides?)
+function BloodFX.spray(position: Vector3, direction: Vector3, preset: (PresetName | Preset)?, overrides: (Overrides | number)?)
 	spray(position, direction, resolve(preset or "Hit", overrides), 1)
 end
 
@@ -124,7 +129,7 @@ function BloodFX.mark(position: Vector3, normal: Vector3, radius: number?)
 	marks:add(position, unit, -unit, radius or 0.25)
 end
 
-function BloodFX.emitter(origin: Origin, preset: (PresetName | Preset)?, overrides: Overrides?): Emitter
+function BloodFX.emitter(origin: Origin, preset: (PresetName | Preset)?, overrides: (Overrides | number)?): Emitter
 	return Emitter.new(origin, resolve(preset or "Drip", overrides), spray, emitters)
 end
 

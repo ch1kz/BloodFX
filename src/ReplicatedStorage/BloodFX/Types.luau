@@ -34,11 +34,13 @@ export type SettingName = keyof<Config>
 
 export type Origin = PVInstance | Attachment | CFrame
 
+export type Range = number | NumberRange
+
 export type Spray = {
-	count: NumberRange,
-	speed: NumberRange,
+	count: Range,
+	speed: Range,
 	spread: number,
-	radius: NumberRange,
+	radius: Range,
 }
 
 type Update = (emitter: Emitter, time: number) -> ()
@@ -51,10 +53,10 @@ export type Preset = Spray & {
 }
 
 export type Overrides = {
-	count: NumberRange?,
-	speed: NumberRange?,
+	count: Range?,
+	speed: Range?,
 	spread: number?,
-	radius: NumberRange?,
+	radius: Range?,
 	direction: Vector3?,
 	rate: number?,
 	rateJitter: number?,

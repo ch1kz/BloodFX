@@ -17,6 +17,12 @@ const function tagged(instance: Instance, tag: string): boolean
 	return parent ~= nil and parent ~= workspace and tagged(parent, tag)
 end
 
+const function span(range: Types.Range): (number, number)
+	if typeof(range) == "number" then return range, range end
+
+	return range.Min, range.Max
+end
+
 local Drops = {}
 Drops.__index = Drops
 
@@ -35,17 +41,19 @@ end
 @native function Drops:spray(position: Vector3, direction: Vector3, spray: Types.Spray, strength: number)
 	const aim = CFrame.lookAlong(Vector3.zero, if direction.Magnitude > 1e-3 then direction else Vector3.yAxis)
 	const spread = math.rad(spray.spread)
-	const sizes = spray.radius.Max - spray.radius.Min
+	const fewest, most = span(spray.count)
+	const slowest, fastest = span(spray.speed)
+	const smallest, largest = span(spray.radius)
 
-	for _ = 1, random:NextInteger(spray.count.Min, spray.count.Max) do
+	for _ = 1, random:NextInteger(fewest, most) do
 		-- Spin around the aim, then tilt off it by an angle drawn evenly between 0 and the spread.
 		-- Even in angle is not even in area, so drops crowd the aim and thin out towards the rim.
 		const turn = CFrame.Angles(0, 0, random:NextNumber(0, 2 * math.pi))
 		const tilt = CFrame.Angles(spread * random:NextNumber(), 0, 0)
-		const speed = random:NextNumber(spray.speed.Min, spray.speed.Max) * strength
+		const speed = random:NextNumber(slowest, fastest) * strength
 
 		-- Squaring the draw leans towards the small end: many fine drops and the odd big one.
-		const radius = spray.radius.Min + sizes * random:NextNumber() ^ 2
+		const radius = smallest + (largest - smallest) * random:NextNumber() ^ 2
 
 		self:launch(position, (aim * turn * tilt).LookVector * speed, radius)
 	end

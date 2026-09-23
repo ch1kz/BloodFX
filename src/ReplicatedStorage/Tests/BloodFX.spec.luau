@@ -97,6 +97,31 @@ test("overrides change a preset for one call and leave it as it was", function()
 	expect(Presets.Hit.count.Max < 30, "the override changed the Hit preset itself")
 end)
 
+test("a number after the preset is the drop count, and ranges take plain numbers", function()
+	BloodFX.spray(ABOVE, DOWN, "Hit", 10)
+	const counted = BloodFX.stats().drops
+	BloodFX.clear()
+
+	BloodFX.spray(ABOVE, DOWN, "Hit", { count = 7, speed = 20, radius = 0.1 })
+	const fixed = BloodFX.stats().drops
+
+	local sized = 0
+	for _, part in workspace.BloodFX.Parts:GetChildren() do
+		if part.Position.Y > HEIGHT and math.abs(part.Size.X - 0.2) < 1e-4 then sized += 1 end
+	end
+
+	const emitter = BloodFX.emitter(CFrame.new(0, HEIGHT + 50, 0), "Drip", { rate = 0 })
+	BloodFX.clear()
+	emitter.count = 3
+	emitter:emit()
+	const emitted = BloodFX.stats().drops
+	emitter:destroy()
+
+	expect(counted == 10, `{counted} drops instead of 10`)
+	expect(fixed == 7 and sized == 7, `{fixed} drops, {sized} of them 0.2 across, instead of 7`)
+	expect(emitted == 3, `an emitter with a count of 3 threw {emitted}`)
+end)
+
 test("drops land and leave marks", function()
 	BloodFX.spray(ABOVE, DOWN, "Hit")
 	expect(BloodFX.stats().drops > 0, "the spray threw nothing")

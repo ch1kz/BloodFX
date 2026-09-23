@@ -39,7 +39,7 @@ wound:destroy()
 
 | Call | Does |
 | --- | --- |
-| `spray(position, direction, preset?, overrides?)` | Throws a cone of drops. `preset` is a preset name, a table of the same shape, or nil for `Hit`; `overrides` replaces some of its values for this call. |
+| `spray(position, direction, preset?, overrides?)` | Throws a cone of drops. `preset` is a preset name, a table of the same shape, or nil for `Hit`; `overrides` replaces some of its values for this call, and a number there is the drop count. |
 | `mark(position, normal, radius?)` | Puts a mark straight onto a surface. |
 | `emitter(origin, preset?, overrides?)` | Starts a continuous source and returns its `Emitter`. `origin` is a `PVInstance`, an `Attachment` or a `CFrame`; nil preset is `Drip`, and `overrides` works as for `spray`. |
 | `get(key)` / `set(key, value)` | Reads or changes a setting by name. `set` needs `Config.DynamicSettings` and checks the type. |
@@ -79,7 +79,8 @@ marks on the same part and goes away when that part leaves the world.
 ## Presets
 
 A preset is a spray shape - `count`, `speed`, `spread` in degrees, `radius` - and, for an emitter,
-how it runs: `direction` in the origin's space, `rate` per second and `rateJitter`. Every preset
+how it runs: `direction` in the origin's space, `rate` per second and `rateJitter`. `count`, `speed`
+and `radius` take a number or a `NumberRange` to draw each value from. Every preset
 works with both `spray` and `emitter`; an emitter fills what a preset leaves out (one emission a
 second, upwards).
 
