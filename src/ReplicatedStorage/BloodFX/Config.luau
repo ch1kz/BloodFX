@@ -5,6 +5,10 @@ return table.freeze({
 	-- workspace.BloodFX.Config or BloodFX.set. Off, they stay as written here. Default: true.
 	DynamicSettings = true,
 
+	-- Switches blood off: whatever is there is cleared, nothing new appears and emitters stay silent
+	-- until it is switched back on. BloodFX.freeze and unfreeze flip it too. Default: false.
+	Frozen = false,
+
 	-- Spare parts made at start and kept for reuse. Default: 600.
 	PoolSize = 600,
 

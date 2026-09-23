@@ -420,6 +420,30 @@ test("freeze clears blood and silences emitters until unfreeze", function()
 	expect(resumed, "the emitter did not resume after unfreeze")
 end)
 
+test("the Frozen attribute switches blood off and on, and freeze shows on it", function()
+	const configuration = workspace.BloodFX.Config
+	BloodFX.mark(Vector3.new(0, HEIGHT, 20), UP, 0.3)
+
+	configuration:SetAttribute("Frozen", true)
+	task.wait()
+	const frozen = BloodFX.isFrozen()
+	const left = BloodFX.stats().marks
+
+	configuration:SetAttribute("Frozen", false)
+	task.wait()
+	const thawed = not BloodFX.isFrozen()
+
+	BloodFX.freeze()
+	const shown = configuration:GetAttribute("Frozen")
+	BloodFX.unfreeze()
+	const cleared = configuration:GetAttribute("Frozen")
+
+	expect(frozen, "setting the Frozen attribute did not freeze blood")
+	expect(left == 0, `{left} marks were left after freezing through the attribute`)
+	expect(thawed, "clearing the Frozen attribute did not unfreeze blood")
+	expect(shown == true and cleared == false, "freeze and unfreeze did not show on the Frozen attribute")
+end)
+
 test("fade takes marks away over the fade time", function()
 	BloodFX.set("MarkFadeTime", 0.2)
 	BloodFX.mark(Vector3.new(0, HEIGHT, 40), UP, 0.3)

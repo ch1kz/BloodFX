@@ -45,8 +45,6 @@ const configuration = if settings.DynamicSettings then Instance.new("Configurati
 
 const emitters: { Emitter } = {}
 
-local frozen = false
-
 const function resolve(preset: PresetName | Preset): Preset
 	if typeof(preset) ~= "string" then return preset end
 
@@ -54,9 +52,14 @@ const function resolve(preset: PresetName | Preset): Preset
 end
 
 const function spray(position: Vector3, direction: Vector3, shape: Spray, strength: number)
-	if frozen then return end
+	if settings.Frozen then return end
 
 	drops:spray(position, direction, shape, strength)
+end
+
+const function clear()
+	drops:clear()
+	marks:clear()
 end
 
 const function refreshFilter()
@@ -85,6 +88,7 @@ const reactions: { [string]: () -> () } = {
 	MarkThickness = function() marks:resizeAll() end,
 	MarkMaxRadius = function() marks:regrid() end,
 	MergeReach = function() marks:regrid() end,
+	Frozen = function() if settings.Frozen then clear() end end,
 }
 
 const function apply(key: string, value: any)
@@ -94,6 +98,12 @@ const function apply(key: string, value: any)
 	if reactions[key] then reactions[key]() end
 end
 
+const function setFrozen(frozen: boolean)
+	if configuration then configuration:SetAttribute("Frozen", frozen) end
+
+	apply("Frozen", frozen)
+end
+
 const BloodFX = {}
 
 function BloodFX.spray(position: Vector3, direction: Vector3, preset: (PresetName | Preset)?)
@@ -101,7 +111,7 @@ function BloodFX.spray(position: Vector3, direction: Vector3, preset: (PresetNam
 end
 
 function BloodFX.mark(position: Vector3, normal: Vector3, radius: number?)
-	if frozen then return end
+	if settings.Frozen then return end
 
 	const unit = normal.Unit
 	marks:add(position, unit, -unit, radius or 0.25)
@@ -124,8 +134,7 @@ function BloodFX.set(key: SettingName, value: any)
 end
 
 function BloodFX.clear()
-	drops:clear()
-	marks:clear()
+	clear()
 end
 
 function BloodFX.fade()
@@ -133,16 +142,15 @@ function BloodFX.fade()
 end
 
 function BloodFX.freeze()
-	frozen = true
-	BloodFX.clear()
+	setFrozen(true)
 end
 
 function BloodFX.unfreeze()
-	frozen = false
+	setFrozen(false)
 end
 
 function BloodFX.isFrozen(): boolean
-	return frozen
+	return settings.Frozen
 end
 
 function BloodFX.stats(): Stats
@@ -155,7 +163,7 @@ function BloodFX.stats(): Stats
 end
 
 const function step(dt: number)
-	if frozen then return end
+	if settings.Frozen then return end
 
 	for _, emitter in emitters do emitter:step(dt) end
 
