@@ -56,9 +56,13 @@ return table.freeze({
 	-- Share of a joining drop's radius that the pool grows by. Default: 0.3.
 	MergeGrowth = 0.3,
 
-	-- How much marks on walls and ceilings merge compared with the floor: 0 keeps every drop apart,
-	-- 1 lets them pool as on the floor. Slopes land in between. Default: 0.6.
+	-- How much marks on walls merge compared with the floor: 0 keeps every drop apart, 1 lets them
+	-- pool as on the floor. Slopes land between the floor and the wall. Default: 0.6.
 	WallPooling = 0.6,
+
+	-- The same for ceilings, where blood holds on worst. Overhangs land between the wall and the
+	-- ceiling. Default: 0.2.
+	CeilingPooling = 0.2,
 
 	-- Drops fly through anything with this tag and everything inside it. Read once at start.
 	-- Default: "BloodIgnore".

@@ -33,10 +33,14 @@ end
 
 const random = Random.new()
 
-const function poolingOn(normal: Vector3, wall: number): number
-	-- 1 on level ground and the wall share on walls and ceilings: normal.Y is the cosine of the
-	-- surface's tilt, so slopes blend between the two.
-	return wall + (1 - wall) * math.max(normal.Y, 0)
+const function poolingOn(normal: Vector3, wall: number, ceiling: number): number
+	-- normal.Y is the cosine of the surface's tilt: 1 on the floor, 0 on a wall, -1 on a ceiling.
+	-- Slopes blend between the floor and the wall, overhangs between the wall and the ceiling.
+	const up = normal.Y
+
+	if up >= 0 then return wall + (1 - wall) * up end
+
+	return wall + (wall - ceiling) * up
 end
 
 local Marks = {}
@@ -58,7 +62,7 @@ end
 
 function Marks:add(position: Vector3, normal: Vector3, radius: number, surface: BasePart?)
 	const settings = self.settings
-	const pooling = poolingOn(normal, settings.WallPooling)
+	const pooling = poolingOn(normal, settings.WallPooling, settings.CeilingPooling)
 	const reach = settings.MergeReach * pooling
 
 	const joins = @native function(mark: Mark): boolean

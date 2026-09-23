@@ -18,6 +18,7 @@ export type Config = {
 	MergeReach: number,
 	MergeGrowth: number,
 	WallPooling: number,
+	CeilingPooling: number,
 	IgnoreTag: string,
 	AbsorbTag: string,
 	AttachTag: string,

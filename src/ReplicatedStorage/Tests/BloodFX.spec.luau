@@ -170,6 +170,30 @@ test("a pool on a slope stays smaller than one on level ground", function()
 	expect(rampPool.Size.Y < floorPool.Size.Y, `the ramp pool ({rampPool.Size.Y}) is not smaller than the floor pool ({floorPool.Size.Y})`)
 end)
 
+test("a ceiling pools, but less than a wall", function()
+	const wall = block(Vector3.new(0.4, 10, 10), Vector3.new(-60, HEIGHT + 5, 30))
+	const ceiling = block(Vector3.new(10, 0.4, 10), Vector3.new(-40, HEIGHT + 10, 30))
+	const onWall = Vector3.new(-59.8, HEIGHT + 5, 30)
+	const onCeiling = Vector3.new(-40, HEIGHT + 9.8, 30)
+
+	for _ = 1, 80 do
+		BloodFX.mark(onWall, Vector3.xAxis, 1)
+		BloodFX.mark(onCeiling, DOWN, 1)
+	end
+
+	task.wait(0.3)
+
+	const wallPool = markNear(onWall)
+	const ceilingPool = markNear(onCeiling)
+	const count = BloodFX.stats().marks
+	wall:Destroy()
+	ceiling:Destroy()
+
+	expect(count == 2, `{count} marks instead of one pool on the wall and one on the ceiling`)
+	expect(wallPool and ceilingPool, "a pool is missing")
+	expect(ceilingPool.Size.Y < wallPool.Size.Y, `the ceiling pool ({ceilingPool.Size.Y}) is not smaller than the wall pool ({wallPool.Size.Y})`)
+end)
+
 test("the ignore tag lets drops fall through", function()
 	const plate = block(Vector3.new(10, 0.2, 10), Vector3.new(60, HEIGHT + 2, 60))
 	plate:AddTag(Config.IgnoreTag)
