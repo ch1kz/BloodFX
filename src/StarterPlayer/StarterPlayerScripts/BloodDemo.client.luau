@@ -20,7 +20,7 @@ const function trail(part: BasePart)
 	wound.Name = "Wound"
 	wound.Parent = part
 
-	BloodFX.emitter(wound, "Trail")
+	BloodFX.emitter(wound, "Drip").rate = 14
 
 	const motion = RunService.Heartbeat:Connect(function()
 		const angle = os.clock() * TRAIL_SPEED

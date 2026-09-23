@@ -1,6 +1,6 @@
 const Types = require(script.Parent.Parent.Types)
 
-const Drip: Types.Preset = table.freeze({
+return table.freeze({
 	count = NumberRange.new(1, 2),
 	speed = NumberRange.new(1, 4),
 	spread = 30,
@@ -8,6 +8,4 @@ const Drip: Types.Preset = table.freeze({
 	direction = -Vector3.yAxis,
 	rate = 5,
 	rateJitter = 0.35,
-})
-
-return Drip
+}) :: Types.Preset

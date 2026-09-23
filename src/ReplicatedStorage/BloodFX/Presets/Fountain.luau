@@ -1,6 +1,6 @@
 const Types = require(script.Parent.Parent.Types)
 
-const Fountain: Types.Preset = table.freeze({
+return table.freeze({
 	count = NumberRange.new(2, 5),
 	speed = NumberRange.new(14, 26),
 	spread = 14,
@@ -10,6 +10,4 @@ const Fountain: Types.Preset = table.freeze({
 	rateJitter = 0.35,
 	pulseRate = 1.2,
 	pulseDepth = 0.6,
-})
-
-return Fountain
+}) :: Types.Preset
