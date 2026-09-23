@@ -20,13 +20,14 @@ const STATIC = table.freeze({ DynamicSettings = true, PoolSize = true })
 const settings: Config = table.clone(Config)
 const presets: { [string]: Preset } = {}
 const emitters: { Emitter } = {}
-const ignored: { Instance } = {}
+const root = Instance.new("Folder")
+const ignored: { Instance } = { root }
 const params = RaycastParams.new()
+const pool = Pool.new(root, settings.PoolSize, settings.Color, settings.Material)
+const marks = Marks.new(pool, settings, params)
+const drops = Drops.new(pool, marks, settings, params)
+const configuration = if settings.DynamicSettings then Instance.new("Configuration") else nil
 
-local pool
-local marks
-local drops
-local configuration: Configuration?
 local frozen = false
 
 const function resolve(preset: Preset | string): Preset
@@ -151,60 +152,50 @@ const function step(dt: number)
 	marks:step(dt)
 end
 
-const function init()
-	for _, module in script.Presets:GetChildren() do
-		presets[module.Name] = require(module)
-	end
+-- init
 
-	const root = Instance.new("Folder")
-	root.Name = "BloodFX"
-	table.insert(ignored, root)
+root.Name = "BloodFX"
 
-	params.FilterType = Enum.RaycastFilterType.Exclude
-	params.RespectCanCollide = true
-	params.IgnoreWater = true
-
-	pool = Pool.new(root, settings.PoolSize, settings.Color, settings.Material)
-	marks = Marks.new(pool, settings, params)
-	drops = Drops.new(pool, marks, settings, params)
-
-	if settings.DynamicSettings then
-		const attributes = Instance.new("Configuration")
-		attributes.Name = "Config"
-
-		for key, value in settings do
-			if not STATIC[key] then attributes:SetAttribute(key, value) end
-		end
-
-		attributes.AttributeChanged:Connect(function(key: string)
-			const value = attributes:GetAttribute(key)
-
-			if accepts(key, value) then
-				apply(key, value)
-			elseif not STATIC[key] then
-				attributes:SetAttribute(key, settings[key])
-			end
-		end)
-
-		attributes.Parent = root
-		configuration = attributes
-	end
-
-	root.Parent = workspace
-
-	RunService.Heartbeat:Connect(step)
-
-	Players.PlayerAdded:Connect(function(player: Player)
-		player.CharacterAdded:Connect(refreshFilter)
-	end)
-
-	for _, player in Players:GetPlayers() do
-		player.CharacterAdded:Connect(refreshFilter)
-	end
-
-	refreshFilter()
+for _, module in script.Presets:GetChildren() do
+	presets[module.Name] = require(module)
 end
 
-init()
+params.FilterType = Enum.RaycastFilterType.Exclude
+params.RespectCanCollide = true
+params.IgnoreWater = true
+
+if configuration then
+	configuration.Name = "Config"
+
+	for key, value in settings do
+		if not STATIC[key] then configuration:SetAttribute(key, value) end
+	end
+
+	configuration.AttributeChanged:Connect(function(key: string)
+		const value = configuration:GetAttribute(key)
+
+		if accepts(key, value) then
+			apply(key, value)
+		elseif not STATIC[key] then
+			configuration:SetAttribute(key, settings[key])
+		end
+	end)
+
+	configuration.Parent = root
+end
+
+root.Parent = workspace
+
+RunService.Heartbeat:Connect(step)
+
+Players.PlayerAdded:Connect(function(player: Player)
+	player.CharacterAdded:Connect(refreshFilter)
+end)
+
+for _, player in Players:GetPlayers() do
+	player.CharacterAdded:Connect(refreshFilter)
+end
+
+refreshFilter()
 
 return BloodFX
