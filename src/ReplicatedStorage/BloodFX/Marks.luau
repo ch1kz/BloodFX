@@ -33,11 +33,10 @@ end
 
 const random = Random.new()
 
-const function poolingOn(normal: Vector3, slope: number): number
-	-- 1 on level ground, easing to 0 at the given slope: normal.Y is the cosine of the surface's tilt,
-	-- so it is measured against the cosine of the steepest tilt that still pools.
-	const level = math.cos(math.rad(slope))
-	return math.clamp((normal.Y - level) / math.max(1 - level, 1e-3), 0, 1)
+const function poolingOn(normal: Vector3, wall: number): number
+	-- 1 on level ground and the wall share on walls and ceilings: normal.Y is the cosine of the
+	-- surface's tilt, so slopes blend between the two.
+	return wall + (1 - wall) * math.max(normal.Y, 0)
 end
 
 local Marks = {}
@@ -59,7 +58,7 @@ end
 
 function Marks:add(position: Vector3, normal: Vector3, radius: number, surface: BasePart?)
 	const settings = self.settings
-	const pooling = poolingOn(normal, settings.MergeSlope)
+	const pooling = poolingOn(normal, settings.WallPooling)
 	const reach = settings.MergeReach * pooling
 
 	const joins = @native function(mark: Mark): boolean

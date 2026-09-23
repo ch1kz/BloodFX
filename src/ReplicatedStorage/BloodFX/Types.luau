@@ -17,7 +17,7 @@ export type Config = {
 	MarkMaxRadius: number,
 	MergeReach: number,
 	MergeGrowth: number,
-	MergeSlope: number,
+	WallPooling: number,
 	IgnoreTag: string,
 	AbsorbTag: string,
 	AttachTag: string,

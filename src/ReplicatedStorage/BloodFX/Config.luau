@@ -1,6 +1,6 @@
 const Types = require(script.Parent.Types)
 
-const Config: Types.Config = {
+return table.freeze({
 	-- Lets the settings below change while the game runs, through the attributes of
 	-- workspace.BloodFX.Config or BloodFX.set. Off, they stay as written here. Default: true.
 	DynamicSettings = true,
@@ -14,11 +14,11 @@ const Config: Types.Config = {
 	-- Material of drops and marks. Default: SmoothPlastic.
 	Material = Enum.Material.SmoothPlastic,
 
-	-- Most drops in flight at once; the oldest makes room for a new one. Default: 160.
-	MaxDrops = 160,
+	-- Most drops in flight at once; the oldest makes room for a new one. Default: 320.
+	MaxDrops = 320,
 
-	-- Most marks at once; the one left alone longest makes room for a new one. Default: 240.
-	MaxMarks = 240,
+	-- Most marks at once; the one left alone longest makes room for a new one. Default: 320.
+	MaxMarks = 320,
 
 	-- Downward pull on drops, in studs per second squared. Default: 60.
 	Gravity = 60,
@@ -47,8 +47,8 @@ const Config: Types.Config = {
 	-- Length of a mark against its width, so marks come out oval. Default: 0.7 to 1.35.
 	MarkStretch = NumberRange.new(0.7, 1.35),
 
-	-- Largest radius a pool grows to, in studs. Default: 3.
-	MarkMaxRadius = 3,
+	-- Largest radius a pool grows to, in studs. Default: 2.5.
+	MarkMaxRadius = 2.5,
 
 	-- A drop landing within this many radii of a mark joins it instead of making its own. Default: 1.35.
 	MergeReach = 1.35,
@@ -56,9 +56,9 @@ const Config: Types.Config = {
 	-- Share of a joining drop's radius that the pool grows by. Default: 0.3.
 	MergeGrowth = 0.3,
 
-	-- Steepest surface, in degrees from level, where marks still merge into pools; the flatter it is,
-	-- the more they merge. On walls and ceilings every drop stays its own splatter. Default: 40.
-	MergeSlope = 40,
+	-- How much marks on walls and ceilings merge compared with the floor: 0 keeps every drop apart,
+	-- 1 lets them pool as on the floor. Slopes land in between. Default: 0.6.
+	WallPooling = 0.6,
 
 	-- Drops fly through anything with this tag and everything inside it. Read once at start.
 	-- Default: "BloodIgnore".
@@ -75,6 +75,4 @@ const Config: Types.Config = {
 	-- Tag put on every player's character: one of the three above, or "" to leave characters alone.
 	-- Read once at start. Default: "BloodIgnore".
 	CharacterTag = "BloodIgnore",
-}
-
-return table.freeze(Config)
+}) :: Types.Config

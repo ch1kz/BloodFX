@@ -125,27 +125,39 @@ test("a pool stays on the part it lies on", function()
 	expect(overhang <= 0.1, `the pool hangs {overhang} studs past the top`)
 end)
 
-test("walls keep every drop as its own splatter", function()
-	const wall = block(Vector3.new(0.4, 6, 6), Vector3.new(-60, HEIGHT + 3, -30))
+test("a wall pools, but less than the floor", function()
+	const wall = block(Vector3.new(0.4, 10, 10), Vector3.new(-60, HEIGHT + 5, -30))
+	const onWall = Vector3.new(-59.8, HEIGHT + 5, -30)
+	const onFloor = Vector3.new(-40, HEIGHT, -40)
 
-	for _ = 1, 5 do BloodFX.mark(Vector3.new(-59.8, HEIGHT + 3, -30), Vector3.xAxis, 0.3) end
+	for _ = 1, 80 do
+		BloodFX.mark(onWall, Vector3.xAxis, 1)
+		BloodFX.mark(onFloor, UP, 1)
+	end
+
+	task.wait(0.3)
+
+	const wallPool = markNear(onWall)
+	const floorPool = markNear(onFloor)
 	const count = BloodFX.stats().marks
-
 	wall:Destroy()
-	expect(count == 5, `{count} marks on a wall instead of five separate ones`)
+
+	expect(count == 2, `{count} marks instead of one pool on the wall and one on the floor`)
+	expect(wallPool and floorPool, "a pool is missing")
+	expect(wallPool.Size.Y < floorPool.Size.Y, `the wall pool ({wallPool.Size.Y}) is not smaller than the floor pool ({floorPool.Size.Y})`)
 end)
 
 test("a pool on a slope stays smaller than one on level ground", function()
 	const ramp = block(Vector3.new(10, 1, 10), Vector3.zero)
-	ramp.CFrame = CFrame.new(-40, HEIGHT + 5, 40) * CFrame.Angles(math.rad(30), 0, 0)
+	ramp.CFrame = CFrame.new(-40, HEIGHT + 5, 40) * CFrame.Angles(math.rad(60), 0, 0)
 
 	const up = ramp.CFrame.UpVector
 	const onRamp = ramp.Position + up * 0.5
 	const onFloor = Vector3.new(40, HEIGHT, 40)
 
 	for _ = 1, 80 do
-		BloodFX.mark(onRamp, up, 0.5)
-		BloodFX.mark(onFloor, UP, 0.5)
+		BloodFX.mark(onRamp, up, 1)
+		BloodFX.mark(onFloor, UP, 1)
 	end
 
 	task.wait(0.3)
