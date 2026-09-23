@@ -12,6 +12,7 @@ type Mark = {
 	position: Vector3,
 	normal: Vector3,
 	radius: number,
+	shape: number,
 	stretch: number,
 	opened: number,
 	age: number,
@@ -111,6 +112,7 @@ function Marks:create(position: Vector3, normal: Vector3, velocity: Vector3, rad
 	const sine = math.abs(velocity:Dot(normal)) / velocity.Magnitude
 	const elongation = 1 + (math.min(1 / sine, MAX_ELONGATION) - 1) * settings.SlantStretch
 
+	const shape = random:NextNumber(settings.MarkStretch.Min, settings.MarkStretch.Max)
 	const part = self.pool:take()
 
 	-- A mark is flat along X and long along Z. With X on the normal and Y across the skid,
@@ -122,7 +124,8 @@ function Marks:create(position: Vector3, normal: Vector3, velocity: Vector3, rad
 		position = position,
 		normal = normal,
 		radius = math.min(radius, settings.MarkMaxRadius),
-		stretch = elongation * random:NextNumber(settings.MarkStretch.Min, settings.MarkStretch.Max),
+		shape = shape,
+		stretch = elongation * shape,
 		opened = START_SCALE,
 		age = 0,
 	}
@@ -185,9 +188,9 @@ function Marks:grow(mark: Mark, radius: number, pooling: number)
 	const grown = math.sqrt(mark.radius ^ 2 + (radius * settings.MergeGrowth) ^ 2)
 	const capped = math.min(grown, settings.MarkMaxRadius * pooling)
 
-	-- The length gains what the width gains, so the first drop's streak keeps its length while the
-	-- pool rounds out around it.
-	const stretch = 1 + (mark.stretch - 1) * mark.radius / capped
+	-- The length a slanted landing added on top of the mark's own shape stays as it was, so the
+	-- streak keeps its length while the pool grows into that shape around it.
+	const stretch = mark.shape + (mark.stretch - mark.shape) * mark.radius / capped
 
 	if capped > mark.radius and self:supports(mark, capped, stretch) then
 		mark.radius = capped
