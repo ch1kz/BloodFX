@@ -41,10 +41,6 @@ function Pool:create(): BasePart
 	return part
 end
 
-function Pool:count(): number
-	return self.total
-end
-
 function Pool:take(shape: Enum.PartType): BasePart
 	const part = table.remove(self.idle) or self:create()
 	part.Shape = shape

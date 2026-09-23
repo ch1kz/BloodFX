@@ -8,8 +8,6 @@ type Drop = {
 	age: number,
 }
 
-const TAU = 2 * math.pi
-
 const random = Random.new()
 
 local Drops = {}
@@ -27,16 +25,14 @@ function Drops.new(pool, marks, settings: Types.Config, params: RaycastParams)
 	}, Drops)
 end
 
-function Drops:count(): number
-	return #self.list
-end
-
 function Drops:spray(position: Vector3, direction: Vector3, spray: Types.Spray, strength: number)
 	const aim = CFrame.lookAlong(Vector3.zero, if direction.Magnitude > 1e-3 then direction else Vector3.yAxis)
 	const cosSpread = math.cos(math.rad(spray.spread))
 
 	for _ = 1, random:NextInteger(spray.count.Min, spray.count.Max) do
-		const turn = CFrame.Angles(0, 0, random:NextNumber(0, TAU))
+		-- Spin around the aim, then tilt off it. Drawing cos(tilt) uniformly from [cos(spread), 1]
+		-- spreads the drops evenly over the cone's cap instead of bunching them at its centre.
+		const turn = CFrame.Angles(0, 0, random:NextNumber(0, 2 * math.pi))
 		const tilt = CFrame.Angles(math.acos(random:NextNumber(cosSpread, 1)), 0, 0)
 		const speed = random:NextNumber(spray.speed.Min, spray.speed.Max) * strength
 		const radius = random:NextNumber(spray.radius.Min, spray.radius.Max)
@@ -78,6 +74,8 @@ end
 function Drops:step(dt: number)
 	const settings = self.settings
 	const fall = Vector3.yAxis * settings.Gravity * dt
+
+	-- Exact decay of dv/dt = -Drag * v over the step, so drag does not change with the frame rate.
 	const keep = math.exp(-settings.Drag * dt)
 
 	for index = #self.list, 1, -1 do

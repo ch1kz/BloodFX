@@ -1,5 +1,5 @@
 export type Config = {
-	Dynamic: boolean,
+	DynamicSettings: boolean,
 	PoolSize: number,
 	Color: Color3,
 	Material: Enum.Material,

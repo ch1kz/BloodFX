@@ -34,12 +34,11 @@ function Marks.new(pool, settings: Types.Config, params: RaycastParams)
 		settings = settings,
 		params = params,
 		list = {} :: { Mark },
+
+		-- A cell as wide as the farthest reach of any pool keeps every mark a drop could join
+		-- within the 27 cells around the spot where it lands.
 		grid = Grid.new(settings.MarkMaxRadius * settings.MergeReach),
 	}, Marks)
-end
-
-function Marks:count(): number
-	return #self.list
 end
 
 function Marks:add(position: Vector3, normal: Vector3, radius: number)
@@ -48,6 +47,8 @@ function Marks:add(position: Vector3, normal: Vector3, radius: number)
 	const target = self.grid:find(position, function(mark: Mark)
 		const gap = position - mark.position
 		const aligned = mark.normal:Dot(normal) >= MERGE_ALIGNMENT
+
+		-- gap projected on the normal is how far the new drop sits off the mark's plane.
 		const coplanar = aligned and math.abs(gap:Dot(mark.normal)) <= PLANE_TOLERANCE
 
 		return coplanar and gap.Magnitude <= mark.radius * reach
@@ -64,6 +65,9 @@ function Marks:create(position: Vector3, normal: Vector3, radius: number)
 	const settings = self.settings
 
 	const part = self.pool:take(Enum.PartType.Cylinder)
+
+	-- A cylinder's round faces sit on its X axis: point X along the normal and turn Y to a random
+	-- tangent, which is the normal crossed with any random direction.
 	part.CFrame = CFrame.fromMatrix(position, normal, normal:Cross(random:NextUnitVector()).Unit)
 
 	const mark: Mark = {
@@ -89,6 +93,8 @@ end
 
 function Marks:grow(mark: Mark, radius: number)
 	const settings = self.settings
+
+	-- Areas add up, so the radii combine as the root of their squares.
 	const grown = math.sqrt(mark.radius ^ 2 + (radius * settings.MergeGrowth) ^ 2)
 	const capped = math.min(grown, settings.MarkMaxRadius)
 
@@ -103,6 +109,8 @@ function Marks:supports(mark: Mark, radius: number): boolean
 	const frame = mark.part.CFrame
 	const lift = mark.normal * PLANE_TOLERANCE
 
+	-- Each side is a unit direction across the mark; scaling it by the two radii lands it on the
+	-- oval's rim. A short ray through the plane there tells whether anything holds that edge up.
 	for _, side in RIM do
 		const edge = frame:PointToWorldSpace(side * Vector3.new(0, radius, radius * mark.stretch))
 		if not workspace:Raycast(edge + lift, lift * -2, self.params) then return false end

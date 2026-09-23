@@ -2,7 +2,6 @@ const Types = require(script.Parent.Types)
 
 type Sprayer = (position: Vector3, direction: Vector3, spray: Types.Spray, strength: number) -> ()
 
-const TAU = 2 * math.pi
 const MAX_JITTER = 0.9
 
 const random = Random.new()
@@ -48,7 +47,9 @@ end
 
 function Emitter:emit()
 	const frame = self:frame()
-	const strength = 1 + self.pulseDepth * math.sin(os.clock() * self.pulseRate * TAU)
+
+	-- A sine wave around 1: speed swings by pulseDepth either way, pulseRate times a second.
+	const strength = 1 + self.pulseDepth * math.sin(os.clock() * self.pulseRate * 2 * math.pi)
 
 	self.spray(frame.Position, frame:VectorToWorldSpace(self.direction), self, strength)
 end

@@ -1,6 +1,7 @@
 const MIN_CELL = 0.1
 const EMPTY = table.freeze({})
 
+-- The digits of 0..26 in base 3, shifted down by one, are every offset from -1 to 1 on each axis.
 const NEIGHBOURS: { Vector3 } = table.create(27)
 for index = 0, 26 do
 	NEIGHBOURS[index + 1] = Vector3.new(index % 3, index // 3 % 3, index // 9) - Vector3.one
