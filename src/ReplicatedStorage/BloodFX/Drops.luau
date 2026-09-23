@@ -34,15 +34,18 @@ end
 
 @native function Drops:spray(position: Vector3, direction: Vector3, spray: Types.Spray, strength: number)
 	const aim = CFrame.lookAlong(Vector3.zero, if direction.Magnitude > 1e-3 then direction else Vector3.yAxis)
-	const cosSpread = math.cos(math.rad(spray.spread))
+	const spread = math.rad(spray.spread)
+	const sizes = spray.radius.Max - spray.radius.Min
 
 	for _ = 1, random:NextInteger(spray.count.Min, spray.count.Max) do
-		-- Spin around the aim, then tilt off it. Drawing cos(tilt) uniformly from [cos(spread), 1]
-		-- spreads the drops evenly over the cone's cap instead of bunching them at its centre.
+		-- Spin around the aim, then tilt off it by an angle drawn evenly between 0 and the spread.
+		-- Even in angle is not even in area, so drops crowd the aim and thin out towards the rim.
 		const turn = CFrame.Angles(0, 0, random:NextNumber(0, 2 * math.pi))
-		const tilt = CFrame.Angles(math.acos(random:NextNumber(cosSpread, 1)), 0, 0)
+		const tilt = CFrame.Angles(spread * random:NextNumber(), 0, 0)
 		const speed = random:NextNumber(spray.speed.Min, spray.speed.Max) * strength
-		const radius = random:NextNumber(spray.radius.Min, spray.radius.Max)
+
+		-- Squaring the draw leans towards the small end: many fine drops and the odd big one.
+		const radius = spray.radius.Min + sizes * random:NextNumber() ^ 2
 
 		self:launch(position, (aim * turn * tilt).LookVector * speed, radius)
 	end
