@@ -14,6 +14,7 @@ export type Config = {
 	MarkThickness: number,
 	MarkScale: NumberRange,
 	MarkStretch: NumberRange,
+	SlantStretch: number,
 	MarkMaxRadius: number,
 	MergeReach: number,
 	MergeGrowth: number,

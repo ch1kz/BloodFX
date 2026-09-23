@@ -58,6 +58,23 @@ const function markNear(position: Vector3): BasePart?
 	return nil
 end
 
+const function slantedMark(): BasePart?
+	BloodFX.spray(ABOVE, Vector3.new(1, -0.2, 0), {
+		count = NumberRange.new(1, 1),
+		speed = NumberRange.new(30, 30),
+		spread = 0,
+		radius = NumberRange.new(0.1, 0.1),
+	})
+
+	task.wait(1)
+
+	for _, part in workspace.BloodFX.Parts:GetChildren() do
+		if flat(part) and part.Position.Y > 0 then return part end
+	end
+
+	return nil
+end
+
 test("every preset sprays", function()
 	for name in Presets do
 		BloodFX.spray(ABOVE, DOWN, name)
@@ -199,24 +216,24 @@ test("a ceiling pools, but less than a wall", function()
 end)
 
 test("a slanted drop leaves a mark stretched along its path", function()
-	const single = {
-		count = NumberRange.new(1, 1),
-		speed = NumberRange.new(30, 30),
-		spread = 0,
-		radius = NumberRange.new(0.1, 0.1),
-	}
-
-	BloodFX.spray(ABOVE, Vector3.new(1, -0.2, 0), single)
-	task.wait(1)
-
-	local mark: BasePart? = nil
-	for _, part in workspace.BloodFX.Parts:GetChildren() do
-		if flat(part) and part.Position.Y > 0 then mark = part end
-	end
+	const mark = slantedMark()
 
 	expect(mark, "the drop left no mark")
 	expect(math.abs(mark.CFrame.LookVector.X) > 0.9, "the mark does not point the way the drop flew")
 	expect(mark.Size.Z > mark.Size.Y * 1.3, `the mark is {mark.Size.Y} wide and only {mark.Size.Z} long`)
+end)
+
+test("SlantStretch at 0 keeps slanted marks round", function()
+	BloodFX.set("SlantStretch", 0)
+	BloodFX.set("MarkStretch", NumberRange.new(1, 1))
+
+	const mark = slantedMark()
+
+	BloodFX.set("SlantStretch", Config.SlantStretch)
+	BloodFX.set("MarkStretch", Config.MarkStretch)
+
+	expect(mark, "the drop left no mark")
+	expect(math.abs(mark.Size.Z - mark.Size.Y) < 0.01, `the mark is {mark.Size.Y} wide and {mark.Size.Z} long`)
 end)
 
 test("the ignore tag lets drops fall through", function()

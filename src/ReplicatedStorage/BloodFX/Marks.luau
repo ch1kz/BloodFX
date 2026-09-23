@@ -109,7 +109,7 @@ function Marks:create(position: Vector3, normal: Vector3, velocity: Vector3, rad
 	-- A stain's width over its length is the sine of the angle the drop came in at; that sine is the
 	-- share of the speed that went into the surface.
 	const sine = math.abs(velocity:Dot(normal)) / velocity.Magnitude
-	const elongation = math.min(1 / sine, MAX_ELONGATION)
+	const elongation = 1 + (math.min(1 / sine, MAX_ELONGATION) - 1) * settings.SlantStretch
 
 	const part = self.pool:take()
 
