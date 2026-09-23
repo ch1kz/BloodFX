@@ -44,7 +44,7 @@ end
 function Marks:add(position: Vector3, normal: Vector3, radius: number)
 	const reach = self.settings.MergeReach
 
-	const target = self.grid:find(position, function(mark: Mark)
+	const target = self.grid:find(position, @native function(mark: Mark)
 		const gap = position - mark.position
 		const aligned = mark.normal:Dot(normal) >= MERGE_ALIGNMENT
 
@@ -105,7 +105,7 @@ function Marks:grow(mark: Mark, radius: number)
 	self:resize(mark)
 end
 
-function Marks:supports(mark: Mark, radius: number): boolean
+@native function Marks:supports(mark: Mark, radius: number): boolean
 	const frame = mark.part.CFrame
 	const lift = mark.normal * PLANE_TOLERANCE
 
@@ -166,7 +166,7 @@ function Marks:clear()
 	self.grid:clear()
 end
 
-function Marks:step(dt: number)
+@native function Marks:step(dt: number)
 	const settings = self.settings
 
 	for index = #self.list, 1, -1 do

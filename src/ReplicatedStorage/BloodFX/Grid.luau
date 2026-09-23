@@ -36,7 +36,7 @@ function Grid:remove(item)
 	if #bucket == 0 then self.buckets[key] = nil end
 end
 
-function Grid:find(position: Vector3, accepts: (any) -> boolean): any?
+@native function Grid:find(position: Vector3, accepts: (any) -> boolean): any?
 	const key = position // self.cell
 
 	for _, offset in NEIGHBOURS do

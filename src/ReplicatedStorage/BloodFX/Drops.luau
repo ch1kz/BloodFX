@@ -25,7 +25,7 @@ function Drops.new(pool, marks, settings: Types.Config, params: RaycastParams)
 	}, Drops)
 end
 
-function Drops:spray(position: Vector3, direction: Vector3, spray: Types.Spray, strength: number)
+@native function Drops:spray(position: Vector3, direction: Vector3, spray: Types.Spray, strength: number)
 	const aim = CFrame.lookAlong(Vector3.zero, if direction.Magnitude > 1e-3 then direction else Vector3.yAxis)
 	const cosSpread = math.cos(math.rad(spray.spread))
 
@@ -71,7 +71,7 @@ function Drops:clear()
 	table.clear(self.list)
 end
 
-function Drops:step(dt: number)
+@native function Drops:step(dt: number)
 	const settings = self.settings
 	const fall = Vector3.yAxis * settings.Gravity * dt
 
