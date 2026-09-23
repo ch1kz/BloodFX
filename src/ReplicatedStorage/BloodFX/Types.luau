@@ -4,28 +4,31 @@ export type Config = {
 	Color: Color3,
 	Material: Enum.Material,
 	MaxDrops: number,
-	MaxStains: number,
+	MaxMarks: number,
 	Gravity: number,
 	Drag: number,
 	DropLifetime: number,
-	StainLifetime: number,
-	StainFadeTime: number,
-	StainOpenTime: number,
-	StainThickness: number,
-	StainScale: NumberRange,
-	StainStretch: NumberRange,
-	StainMaxRadius: number,
+	MarkLifetime: number,
+	MarkFadeTime: number,
+	MarkOpenTime: number,
+	MarkThickness: number,
+	MarkScale: NumberRange,
+	MarkStretch: NumberRange,
+	MarkMaxRadius: number,
 	MergeReach: number,
 	MergeGrowth: number,
 }
 
 export type Origin = PVInstance | Attachment | CFrame
 
-export type Preset = {
+export type Spray = {
 	count: NumberRange,
 	speed: NumberRange,
 	spread: number,
 	radius: NumberRange,
+}
+
+export type Preset = Spray & {
 	direction: Vector3?,
 	rate: number?,
 	rateJitter: number?,
@@ -33,26 +36,24 @@ export type Preset = {
 	pulseDepth: number?,
 }
 
-export type Source = {
+export type Emitter = Spray & {
 	origin: Origin,
 	enabled: boolean,
-	count: NumberRange,
-	speed: NumberRange,
-	spread: number,
-	radius: NumberRange,
 	direction: Vector3,
 	rate: number,
 	rateJitter: number,
 	pulseRate: number,
 	pulseDepth: number,
-	emit: (self: Source) -> (),
-	destroy: (self: Source) -> (),
+
+	frame: (self: Emitter) -> CFrame,
+	emit: (self: Emitter) -> (),
+	destroy: (self: Emitter) -> (),
 }
 
 export type Stats = {
 	drops: number,
-	stains: number,
-	sources: number,
+	marks: number,
+	emitters: number,
 	parts: number,
 }
 

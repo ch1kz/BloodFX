@@ -8,19 +8,19 @@ const Config: Types.Config = {
 	Material = Enum.Material.SmoothPlastic,
 
 	MaxDrops = 160,
-	MaxStains = 240,
+	MaxMarks = 240,
 
 	Gravity = 60,
 	Drag = 0.35,
 	DropLifetime = 3,
 
-	StainLifetime = 25,
-	StainFadeTime = 3,
-	StainOpenTime = 0.16,
-	StainThickness = 0.06,
-	StainScale = NumberRange.new(2, 3),
-	StainStretch = NumberRange.new(0.7, 1.35),
-	StainMaxRadius = 3,
+	MarkLifetime = 25,
+	MarkFadeTime = 3,
+	MarkOpenTime = 0.16,
+	MarkThickness = 0.06,
+	MarkScale = NumberRange.new(2, 3),
+	MarkStretch = NumberRange.new(0.7, 1.35),
+	MarkMaxRadius = 3,
 
 	MergeReach = 1.35,
 	MergeGrowth = 0.3,
