@@ -3,6 +3,7 @@ const ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 const BloodFX = require(ReplicatedStorage.BloodFX)
 const Config = require(ReplicatedStorage.BloodFX.Config)
+const Presets = require(ReplicatedStorage.BloodFX.Presets)
 
 type Case = {
 	name: string,
@@ -54,8 +55,8 @@ const function markNear(position: Vector3): BasePart?
 end
 
 test("every preset sprays", function()
-	for _, preset in ReplicatedStorage.BloodFX.Presets:GetChildren() do
-		BloodFX.spray(ABOVE, DOWN, preset.Name)
+	for name in Presets do
+		BloodFX.spray(ABOVE, DOWN, name)
 	end
 
 	expect(BloodFX.stats().drops > 0, "no drops were thrown")

@@ -10,8 +10,7 @@ const Emitter = require(Package.Emitter)
 const Grid = require(Package.Grid)
 const Marks = require(Package.Marks)
 const Pool = require(Package.Pool)
-const Fountain = require(Package.Presets.Fountain)
-const Hit = require(Package.Presets.Hit)
+const Presets = require(Package.Presets)
 
 type Timing = {
 	name: string,
@@ -154,7 +153,7 @@ function Performance.benchmark(): string
 	drops:clear()
 	settings.MaxDrops = Config.MaxDrops
 
-	measure(timings, "Drops:spray, Hit", 20, function() drops:spray(sky, UP, Hit, 1) end)
+	measure(timings, "Drops:spray, Hit", 20, function() drops:spray(sky, UP, Presets.Hit, 1) end)
 	drops:clear()
 
 	for _ = 1, settings.MaxDrops do
@@ -190,9 +189,9 @@ function Performance.benchmark(): string
 		drops:spray(position, direction, shape, strength)
 	end
 
-	const onPart = Emitter.new(origin, Fountain, sprayer, emitters)
-	const onAttachment = Emitter.new(attachment, Fountain, sprayer, emitters)
-	const onFrame = Emitter.new(CFrame.new(sky), Fountain, sprayer, emitters)
+	const onPart = Emitter.new(origin, Presets.Fountain, sprayer, emitters)
+	const onAttachment = Emitter.new(attachment, Presets.Fountain, sprayer, emitters)
+	const onFrame = Emitter.new(CFrame.new(sky), Presets.Fountain, sprayer, emitters)
 
 	measure(timings, "Emitter:frame, part", 5000, function() onPart:frame() end)
 	measure(timings, "Emitter:frame, attachment", 5000, function() onAttachment:frame() end)
