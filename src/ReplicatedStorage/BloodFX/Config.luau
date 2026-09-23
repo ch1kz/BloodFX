@@ -56,6 +56,10 @@ const Config: Types.Config = {
 	-- Share of a joining drop's radius that the pool grows by. Default: 0.3.
 	MergeGrowth = 0.3,
 
+	-- Steepest surface, in degrees from level, where marks still merge into pools; the flatter it is,
+	-- the more they merge. On walls and ceilings every drop stays its own splatter. Default: 40.
+	MergeSlope = 40,
+
 	-- Drops fly through anything with this tag and everything inside it. Read once at start.
 	-- Default: "BloodIgnore".
 	IgnoreTag = "BloodIgnore",

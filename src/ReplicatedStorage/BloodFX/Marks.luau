@@ -33,6 +33,13 @@ end
 
 const random = Random.new()
 
+const function poolingOn(normal: Vector3, slope: number): number
+	-- 1 on level ground, easing to 0 at the given slope: normal.Y is the cosine of the surface's tilt,
+	-- so it is measured against the cosine of the steepest tilt that still pools.
+	const level = math.cos(math.rad(slope))
+	return math.clamp((normal.Y - level) / math.max(1 - level, 1e-3), 0, 1)
+end
+
 local Marks = {}
 Marks.__index = Marks
 
@@ -51,7 +58,9 @@ function Marks.new(pool, settings: Types.Config, params: RaycastParams)
 end
 
 function Marks:add(position: Vector3, normal: Vector3, radius: number, surface: BasePart?)
-	const reach = self.settings.MergeReach
+	const settings = self.settings
+	const pooling = poolingOn(normal, settings.MergeSlope)
+	const reach = settings.MergeReach * pooling
 
 	const joins = @native function(mark: Mark): boolean
 		const gap = position - mark.position
@@ -63,10 +72,12 @@ function Marks:add(position: Vector3, normal: Vector3, radius: number, surface: 
 		return coplanar and gap.Magnitude <= mark.radius * reach
 	end
 
-	const target = if surface then self:findOn(surface, joins) else self.grid:find(position, joins)
+	const target = if pooling == 0 then nil
+		elseif surface then self:findOn(surface, joins)
+		else self.grid:find(position, joins)
 
 	if target then
-		self:grow(target, radius)
+		self:grow(target, radius, pooling)
 	else
 		self:create(position, normal, radius, surface)
 	end
@@ -153,12 +164,12 @@ function Marks:detach(mark: Mark, bond: Bond)
 	mark.part.Anchored = true
 end
 
-function Marks:grow(mark: Mark, radius: number)
+function Marks:grow(mark: Mark, radius: number, pooling: number)
 	const settings = self.settings
 
 	-- Areas add up, so the radii combine as the root of their squares.
 	const grown = math.sqrt(mark.radius ^ 2 + (radius * settings.MergeGrowth) ^ 2)
-	const capped = math.min(grown, settings.MarkMaxRadius)
+	const capped = math.min(grown, settings.MarkMaxRadius * pooling)
 
 	if capped > mark.radius and self:supports(mark, capped) then mark.radius = capped end
 
