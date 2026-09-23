@@ -216,7 +216,13 @@ test("a ceiling pools, but less than a wall", function()
 end)
 
 test("a slanted drop leaves a mark stretched along its path", function()
+	BloodFX.set("SlantStretch", 1)
+	BloodFX.set("MarkStretch", NumberRange.new(1, 1))
+
 	const mark = slantedMark()
+
+	BloodFX.set("SlantStretch", Config.SlantStretch)
+	BloodFX.set("MarkStretch", Config.MarkStretch)
 
 	expect(mark, "the drop left no mark")
 	expect(math.abs(mark.CFrame.LookVector.X) > 0.9, "the mark does not point the way the drop flew")
