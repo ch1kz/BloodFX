@@ -1,3 +1,4 @@
+const Players = game:GetService("Players")
 const ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 const BloodFX = require(ReplicatedStorage.BloodFX)
@@ -32,6 +33,16 @@ const function block(size: Vector3, position: Vector3): BasePart
 	part.Parent = workspace
 
 	return part
+end
+
+const function raisedMarks(): { BasePart }
+	const found = {}
+
+	for _, part in workspace.BloodFX.Parts:GetChildren() do
+		if part.Shape == Enum.PartType.Cylinder and part.Position.Y > HEIGHT + 1 then table.insert(found, part) end
+	end
+
+	return found
 end
 
 const function markNear(position: Vector3): BasePart?
@@ -113,6 +124,68 @@ test("a pool stays on the part it lies on", function()
 	expect(overhang <= 0.1, `the pool hangs {overhang} studs past the top`)
 end)
 
+test("the ignore tag lets drops fall through", function()
+	const plate = block(Vector3.new(10, 0.2, 10), Vector3.new(60, HEIGHT + 2, 60))
+	plate:AddTag(Config.IgnoreTag)
+	task.wait()
+
+	BloodFX.spray(Vector3.new(60, HEIGHT + 4, 60), DOWN, "Hit")
+	task.wait(1)
+
+	const raised = #raisedMarks()
+	plate:Destroy()
+
+	expect(BloodFX.stats().marks > 0, "nothing reached the floor under the plate")
+	expect(raised == 0, `{raised} marks landed on the ignored plate`)
+end)
+
+test("the absorb tag swallows drops", function()
+	const plate = block(Vector3.new(10, 0.2, 10), Vector3.new(60, HEIGHT + 2, 60))
+	plate:AddTag(Config.AbsorbTag)
+
+	BloodFX.spray(Vector3.new(60, HEIGHT + 4, 60), DOWN, "Hit")
+	task.wait(1)
+
+	const stats = BloodFX.stats()
+	plate:Destroy()
+
+	expect(stats.drops + stats.marks == 0, `{stats.marks} marks were left on an absorbing plate`)
+end)
+
+test("the attach tag carries marks with their part", function()
+	const plate = block(Vector3.new(10, 0.2, 10), Vector3.new(60, HEIGHT + 2, 60))
+	plate:AddTag(Config.AttachTag)
+
+	BloodFX.spray(Vector3.new(60, HEIGHT + 4, 60), DOWN, "Hit")
+	task.wait(1)
+
+	const marks = raisedMarks()
+	const offsets = {}
+
+	for _, mark in marks do offsets[mark] = plate.CFrame:PointToObjectSpace(mark.Position) end
+
+	plate.CFrame *= CFrame.new(0, 5, 0) * CFrame.Angles(0, math.rad(90), 0)
+	task.wait()
+
+	local stayed = 0
+	for mark, offset in offsets do
+		if (plate.CFrame:PointToObjectSpace(mark.Position) - offset).Magnitude > 0.01 then stayed += 1 end
+	end
+
+	plate:Destroy()
+	task.wait()
+
+	expect(#marks > 0, "no marks landed on the plate")
+	expect(stayed == 0, `{stayed} of {#marks} marks stayed behind when the plate moved`)
+	expect(BloodFX.stats().marks == 0, "marks outlived the part they were stuck to")
+end)
+
+test("player characters carry the character tag", function()
+	const character = Players:GetPlayers()[1].Character
+
+	expect(character and character:HasTag(Config.CharacterTag), "the player's character has no character tag")
+end)
+
 test("MaxMarks caps the count", function()
 	BloodFX.set("MaxMarks", 3)
 
@@ -127,6 +200,7 @@ test("set checks the key and the value", function()
 	expect(not pcall(BloodFX.set, "Gravity", "fast"), "a string was accepted for Gravity")
 	expect(not pcall(BloodFX.set, "Gravity", -1), "a negative Gravity was accepted")
 	expect(not pcall(BloodFX.set, "PoolSize", 10), "PoolSize changed at runtime")
+	expect(not pcall(BloodFX.set, "AttachTag", "Other"), "a tag changed at runtime")
 	expect(not pcall(BloodFX.set, "Nope", 1), "an unknown key was accepted")
 	expect(not pcall(BloodFX.set, "Material", Enum.PartType.Ball), "a PartType was accepted as a Material")
 

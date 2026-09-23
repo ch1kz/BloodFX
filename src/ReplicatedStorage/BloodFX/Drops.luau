@@ -10,6 +10,13 @@ type Drop = {
 
 const random = Random.new()
 
+const function tagged(instance: Instance, tag: string): boolean
+	if instance:HasTag(tag) then return true end
+
+	const parent = instance.Parent
+	return parent ~= nil and parent ~= workspace and tagged(parent, tag)
+end
+
 local Drops = {}
 Drops.__index = Drops
 
@@ -57,6 +64,18 @@ function Drops:launch(position: Vector3, velocity: Vector3, radius: number)
 	self:trim()
 end
 
+function Drops:land(drop: Drop, hit: RaycastResult)
+	const settings = self.settings
+	const surface = hit.Instance
+
+	if tagged(surface, settings.AbsorbTag) then return end
+
+	const scale = random:NextNumber(settings.MarkScale.Min, settings.MarkScale.Max)
+	const attached = if tagged(surface, settings.AttachTag) then surface else nil
+
+	self.marks:add(hit.Position, hit.Normal, drop.radius * scale, attached)
+end
+
 function Drops:remove(index: number)
 	const drop = table.remove(self.list, index)
 	self.pool:give(drop.part)
@@ -87,10 +106,8 @@ end
 		const hit = workspace:Raycast(drop.position, travel, self.params)
 
 		if hit then
-			const scale = random:NextNumber(settings.MarkScale.Min, settings.MarkScale.Max)
-
 			self:remove(index)
-			self.marks:add(hit.Position, hit.Normal, drop.radius * scale)
+			self:land(drop, hit)
 		elseif drop.age > settings.DropLifetime then
 			self:remove(index)
 		else

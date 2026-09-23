@@ -55,6 +55,22 @@ const Config: Types.Config = {
 
 	-- Share of a joining drop's radius that the pool grows by. Default: 0.3.
 	MergeGrowth = 0.3,
+
+	-- Drops fly through anything with this tag and everything inside it. Read once at start.
+	-- Default: "BloodIgnore".
+	IgnoreTag = "BloodIgnore",
+
+	-- A drop landing on anything with this tag, or inside it, vanishes without a mark. Read once at start.
+	-- Default: "BloodAbsorb".
+	AbsorbTag = "BloodAbsorb",
+
+	-- A mark landing on anything with this tag, or inside it, sticks to that part and moves with it.
+	-- Read once at start. Default: "BloodAttach".
+	AttachTag = "BloodAttach",
+
+	-- Tag put on every player's character: one of the three above, or "" to leave characters alone.
+	-- Read once at start. Default: "BloodIgnore".
+	CharacterTag = "BloodIgnore",
 }
 
 return table.freeze(Config)

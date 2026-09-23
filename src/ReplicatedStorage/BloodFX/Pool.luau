@@ -14,6 +14,7 @@ function Pool.new(parent: Instance, size: number, color: Color3, material: Enum.
 	template.CanQuery = false
 	template.CanTouch = false
 	template.CastShadow = false
+	template.Massless = true
 	template.Color = color
 	template.Material = material
 	template.CFrame = STORAGE

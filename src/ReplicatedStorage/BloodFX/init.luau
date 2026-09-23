@@ -1,3 +1,4 @@
+const CollectionService = game:GetService("CollectionService")
 const Players = game:GetService("Players")
 const RunService = game:GetService("RunService")
 
@@ -15,18 +16,32 @@ export type Preset = Types.Preset
 export type Spray = Types.Spray
 export type Stats = Types.Stats
 
-const STATIC = table.freeze({ DynamicSettings = true, PoolSize = true })
+const STATIC = table.freeze({
+	DynamicSettings = true,
+	PoolSize = true,
+	IgnoreTag = true,
+	AbsorbTag = true,
+	AttachTag = true,
+	CharacterTag = true,
+})
 
 const settings: Config = table.clone(Config)
-const presets: { [string]: Preset } = {}
-const emitters: { Emitter } = {}
-const root = Instance.new("Folder")
-const ignored: { Instance } = { root }
+
 const params = RaycastParams.new()
+params.FilterType = Enum.RaycastFilterType.Exclude
+params.RespectCanCollide = true
+params.IgnoreWater = true
+
+const root = Instance.new("Folder")
+root.Name = "BloodFX"
+
 const pool = Pool.new(root, settings.PoolSize, settings.Color, settings.Material)
 const marks = Marks.new(pool, settings, params)
 const drops = Drops.new(pool, marks, settings, params)
 const configuration = if settings.DynamicSettings then Instance.new("Configuration") else nil
+
+const presets: { [string]: Preset } = {}
+const emitters: { Emitter } = {}
 
 local frozen = false
 
@@ -43,13 +58,11 @@ const function spray(position: Vector3, direction: Vector3, shape: Spray, streng
 end
 
 const function refreshFilter()
-	const filter = table.clone(ignored)
+	params.FilterDescendantsInstances = CollectionService:GetTagged(settings.IgnoreTag)
+end
 
-	for _, player in Players:GetPlayers() do
-		if player.Character then table.insert(filter, player.Character) end
-	end
-
-	params.FilterDescendantsInstances = filter
+const function tagCharacter(character: Model)
+	if settings.CharacterTag ~= "" then character:AddTag(settings.CharacterTag) end
 end
 
 const function accepts(key: string, value: any): boolean
@@ -107,11 +120,6 @@ function BloodFX.set(key: string, value: any)
 	apply(key, value)
 end
 
-function BloodFX.ignore(instance: Instance)
-	table.insert(ignored, instance)
-	refreshFilter()
-end
-
 function BloodFX.clear()
 	drops:clear()
 	marks:clear()
@@ -154,15 +162,9 @@ end
 
 -- init
 
-root.Name = "BloodFX"
-
 for _, module in script.Presets:GetChildren() do
 	presets[module.Name] = require(module)
 end
-
-params.FilterType = Enum.RaycastFilterType.Exclude
-params.RespectCanCollide = true
-params.IgnoreWater = true
 
 if configuration then
 	configuration.Name = "Config"
@@ -188,12 +190,16 @@ root.Parent = workspace
 
 RunService.Heartbeat:Connect(step)
 
+CollectionService:GetInstanceAddedSignal(settings.IgnoreTag):Connect(refreshFilter)
+CollectionService:GetInstanceRemovedSignal(settings.IgnoreTag):Connect(refreshFilter)
+
 Players.PlayerAdded:Connect(function(player: Player)
-	player.CharacterAdded:Connect(refreshFilter)
+	player.CharacterAdded:Connect(tagCharacter)
 end)
 
 for _, player in Players:GetPlayers() do
-	player.CharacterAdded:Connect(refreshFilter)
+	player.CharacterAdded:Connect(tagCharacter)
+	if player.Character then tagCharacter(player.Character) end
 end
 
 refreshFilter()

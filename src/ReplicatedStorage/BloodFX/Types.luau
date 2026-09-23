@@ -17,6 +17,10 @@ export type Config = {
 	MarkMaxRadius: number,
 	MergeReach: number,
 	MergeGrowth: number,
+	IgnoreTag: string,
+	AbsorbTag: string,
+	AttachTag: string,
+	CharacterTag: string,
 }
 
 export type Origin = PVInstance | Attachment | CFrame

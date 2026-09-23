@@ -1,6 +1,12 @@
 const Grid = require(script.Parent.Grid)
 const Types = require(script.Parent.Types)
 
+type Bond = {
+	surface: BasePart,
+	weld: WeldConstraint,
+	watch: RBXScriptConnection,
+}
+
 type Mark = {
 	part: BasePart,
 	position: Vector3,
@@ -9,6 +15,7 @@ type Mark = {
 	stretch: number,
 	opened: number,
 	age: number,
+	bond: Bond?,
 }
 
 const START_SCALE = 0.35
@@ -16,6 +23,7 @@ const MIN_RADIUS = 0.02
 const MERGE_ALIGNMENT = 0.7
 const PLANE_TOLERANCE = 0.25
 const RIM_POINTS = 8
+const NO_MARKS: { Mark } = table.freeze({})
 
 const RIM: { Vector3 } = table.create(RIM_POINTS)
 for index = 1, RIM_POINTS do
@@ -34,6 +42,7 @@ function Marks.new(pool, settings: Types.Config, params: RaycastParams)
 		settings = settings,
 		params = params,
 		list = {} :: { Mark },
+		attached = {} :: { [BasePart]: { Mark } },
 
 		-- A cell as wide as the farthest reach of any pool keeps every mark a drop could join
 		-- within the 27 cells around the spot where it lands.
@@ -41,10 +50,10 @@ function Marks.new(pool, settings: Types.Config, params: RaycastParams)
 	}, Marks)
 end
 
-function Marks:add(position: Vector3, normal: Vector3, radius: number)
+function Marks:add(position: Vector3, normal: Vector3, radius: number, surface: BasePart?)
 	const reach = self.settings.MergeReach
 
-	const target = self.grid:find(position, @native function(mark: Mark)
+	const joins = @native function(mark: Mark): boolean
 		const gap = position - mark.position
 		const aligned = mark.normal:Dot(normal) >= MERGE_ALIGNMENT
 
@@ -52,16 +61,29 @@ function Marks:add(position: Vector3, normal: Vector3, radius: number)
 		const coplanar = aligned and math.abs(gap:Dot(mark.normal)) <= PLANE_TOLERANCE
 
 		return coplanar and gap.Magnitude <= mark.radius * reach
-	end)
+	end
+
+	const target = if surface then self:findOn(surface, joins) else self.grid:find(position, joins)
 
 	if target then
 		self:grow(target, radius)
 	else
-		self:create(position, normal, radius)
+		self:create(position, normal, radius, surface)
 	end
 end
 
-function Marks:create(position: Vector3, normal: Vector3, radius: number)
+function Marks:findOn(surface: BasePart, joins: (Mark) -> boolean): Mark?
+	for _, mark in self.attached[surface] or NO_MARKS do
+		mark.position = mark.part.Position
+		mark.normal = mark.part.CFrame.RightVector
+
+		if joins(mark) then return mark end
+	end
+
+	return nil
+end
+
+function Marks:create(position: Vector3, normal: Vector3, radius: number, surface: BasePart?)
 	const settings = self.settings
 
 	const part = self.pool:take(Enum.PartType.Cylinder)
@@ -85,10 +107,50 @@ function Marks:create(position: Vector3, normal: Vector3, radius: number)
 	end
 
 	self:resize(mark)
-	self.grid:insert(mark)
 	table.insert(self.list, mark)
 
+	if surface then
+		self:attach(mark, surface)
+	else
+		self.grid:insert(mark)
+	end
+
 	self:trim()
+end
+
+function Marks:attach(mark: Mark, surface: BasePart)
+	mark.part.Anchored = false
+
+	const weld = Instance.new("WeldConstraint")
+	weld.Part0 = mark.part
+	weld.Part1 = surface
+	weld.Parent = mark.part
+
+	const watch = surface.AncestryChanged:Connect(function()
+		const index = table.find(self.list, mark)
+		if index and not surface:IsDescendantOf(workspace) then self:remove(index) end
+	end)
+
+	mark.bond = { surface = surface, weld = weld, watch = watch }
+
+	const marks = self.attached[surface]
+
+	if marks then
+		table.insert(marks, mark)
+	else
+		self.attached[surface] = { mark }
+	end
+end
+
+function Marks:detach(mark: Mark, bond: Bond)
+	const marks = self.attached[bond.surface]
+
+	table.remove(marks, table.find(marks, mark))
+	if #marks == 0 then self.attached[bond.surface] = nil end
+
+	bond.watch:Disconnect()
+	bond.weld:Destroy()
+	mark.part.Anchored = true
 end
 
 function Marks:grow(mark: Mark, radius: number)
@@ -130,8 +192,14 @@ end
 
 function Marks:remove(index: number)
 	const mark = table.remove(self.list, index)
+	const bond = mark.bond
 
-	self.grid:remove(mark)
+	if bond then
+		self:detach(mark, bond)
+	else
+		self.grid:remove(mark)
+	end
+
 	self.pool:give(mark.part)
 end
 
@@ -151,7 +219,13 @@ end
 
 function Marks:regrid()
 	const settings = self.settings
-	self.grid:rebuild(settings.MarkMaxRadius * settings.MergeReach, self.list)
+	const loose = {}
+
+	for _, mark in self.list do
+		if not mark.bond then table.insert(loose, mark) end
+	end
+
+	self.grid:rebuild(settings.MarkMaxRadius * settings.MergeReach, loose)
 end
 
 function Marks:fade()
@@ -160,10 +234,7 @@ function Marks:fade()
 end
 
 function Marks:clear()
-	for _, mark in self.list do self.pool:give(mark.part) end
-
-	table.clear(self.list)
-	self.grid:clear()
+	for index = #self.list, 1, -1 do self:remove(index) end
 end
 
 @native function Marks:step(dt: number)
