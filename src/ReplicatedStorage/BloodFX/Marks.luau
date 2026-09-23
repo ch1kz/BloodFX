@@ -12,9 +12,16 @@ type Mark = {
 }
 
 const START_SCALE = 0.35
+const MIN_RADIUS = 0.02
 const MERGE_ALIGNMENT = 0.7
 const PLANE_TOLERANCE = 0.25
-const RIM = table.freeze({ Vector3.yAxis, -Vector3.yAxis, Vector3.zAxis, -Vector3.zAxis })
+const RIM_POINTS = 8
+
+const RIM: { Vector3 } = table.create(RIM_POINTS)
+for index = 1, RIM_POINTS do
+	const angle = index * 2 * math.pi / RIM_POINTS
+	RIM[index] = Vector3.new(0, math.cos(angle), math.sin(angle))
+end
 
 const random = Random.new()
 
@@ -69,6 +76,10 @@ function Marks:create(position: Vector3, normal: Vector3, radius: number)
 		age = 0,
 	}
 
+	while mark.radius > MIN_RADIUS and not self:supports(mark, mark.radius) do
+		mark.radius /= 2
+	end
+
 	self:resize(mark)
 	self.grid:insert(mark)
 	table.insert(self.list, mark)
@@ -81,7 +92,7 @@ function Marks:grow(mark: Mark, radius: number)
 	const grown = math.sqrt(mark.radius ^ 2 + (radius * settings.MergeGrowth) ^ 2)
 	const capped = math.min(grown, settings.MarkMaxRadius)
 
-	if self:supports(mark, capped) then mark.radius = capped end
+	if capped > mark.radius and self:supports(mark, capped) then mark.radius = capped end
 
 	mark.age = 0
 	mark.part.Transparency = 0
