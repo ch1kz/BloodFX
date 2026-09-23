@@ -9,8 +9,8 @@ return table.freeze({
 	-- until it is switched back on. BloodFX.freeze and unfreeze flip it too. Default: false.
 	Frozen = false,
 
-	-- Spare parts made at start and kept for reuse. Default: 600.
-	PoolSize = 600,
+	-- Spare parts made at start and kept for reuse. Default: 1200.
+	PoolSize = 1200,
 
 	-- Colour of drops and marks. Default: 124, 10, 10.
 	Color = Color3.fromRGB(124, 10, 10),
@@ -21,8 +21,8 @@ return table.freeze({
 	-- Most drops in flight at once; the oldest makes room for a new one. Default: 320.
 	MaxDrops = 320,
 
-	-- Most marks at once; the one left alone longest makes room for a new one. Default: 320.
-	MaxMarks = 320,
+	-- Most marks at once; the one left alone longest makes room for a new one. Default: 1000.
+	MaxMarks = 1000,
 
 	-- Downward pull on drops, in studs per second squared. Default: 60.
 	Gravity = 60,
@@ -54,8 +54,8 @@ return table.freeze({
 
 	-- How far a drop that lands at a slant stretches its mark along its path: 0 leaves the mark
 	-- round, 1 stretches it as a real drop would, up to three times as long as it is wide, and more
-	-- overdoes it. Default: 1.
-	SlantStretch = 1,
+	-- overdoes it. Default: 0.7.
+	SlantStretch = 0.7,
 
 	-- Largest radius a pool grows to, in studs. Default: 2.5.
 	MarkMaxRadius = 2.5,
