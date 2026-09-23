@@ -90,7 +90,7 @@ function Performance.benchmark(): string
 	const drops = Drops.new(pool, marks, settings, params)
 
 	const parts = table.create(500)
-	measure(timings, "Pool:take", 500, function(index) parts[index] = pool:take(Enum.PartType.Ball) end)
+	measure(timings, "Pool:take", 500, function(index) parts[index] = pool:take() end)
 	measure(timings, "Pool:give", 500, function(index) pool:give(parts[index]) end, function(index)
 		parts[index].CFrame = CFrame.new(index % 25 * 2, HEIGHT + 5, index // 25 * 2)
 	end)

@@ -100,10 +100,10 @@ end
 function Marks:create(position: Vector3, normal: Vector3, radius: number, surface: BasePart?)
 	const settings = self.settings
 
-	const part = self.pool:take(Enum.PartType.Cylinder)
+	const part = self.pool:take()
 
-	-- A cylinder's round faces sit on its X axis: point X along the normal and turn Y to a random
-	-- tangent, which is the normal crossed with any random direction.
+	-- A mark is flat along X: point X along the normal and turn Y to a random tangent, which is
+	-- the normal crossed with any random direction.
 	part.CFrame = CFrame.fromMatrix(position, normal, normal:Cross(random:NextUnitVector()).Unit)
 
 	const mark: Mark = {

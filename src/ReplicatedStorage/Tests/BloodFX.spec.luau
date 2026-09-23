@@ -36,11 +36,15 @@ const function block(size: Vector3, position: Vector3): BasePart
 	return part
 end
 
+const function flat(part: BasePart): boolean
+	return part.Size.X < part.Size.Y
+end
+
 const function raisedMarks(): { BasePart }
 	const found = {}
 
 	for _, part in workspace.BloodFX.Parts:GetChildren() do
-		if part.Shape == Enum.PartType.Cylinder and part.Position.Y > HEIGHT + 1 then table.insert(found, part) end
+		if flat(part) and part.Position.Y > HEIGHT + 1 then table.insert(found, part) end
 	end
 
 	return found
@@ -48,7 +52,7 @@ end
 
 const function markNear(position: Vector3): BasePart?
 	for _, part in workspace.BloodFX.Parts:GetChildren() do
-		if part.Shape == Enum.PartType.Cylinder and (part.Position - position).Magnitude < 0.01 then return part end
+		if flat(part) and (part.Position - position).Magnitude < 0.01 then return part end
 	end
 
 	return nil

@@ -52,7 +52,7 @@ end
 end
 
 function Drops:launch(position: Vector3, velocity: Vector3, radius: number)
-	const part = self.pool:take(Enum.PartType.Ball)
+	const part = self.pool:take()
 	part.Size = Vector3.one * radius * 2
 	part.CFrame = CFrame.new(position)
 

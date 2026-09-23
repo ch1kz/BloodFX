@@ -19,6 +19,10 @@ function Pool.new(parent: Instance, size: number, color: Color3, material: Enum.
 	template.Material = material
 	template.CFrame = STORAGE
 
+	const mesh = Instance.new("SpecialMesh")
+	mesh.MeshType = Enum.MeshType.Sphere
+	mesh.Parent = template
+
 	const self = setmetatable({
 		container = container,
 		template = template,
@@ -42,9 +46,8 @@ function Pool:create(): BasePart
 	return part
 end
 
-function Pool:take(shape: Enum.PartType): BasePart
+function Pool:take(): BasePart
 	const part = table.remove(self.idle) or self:create()
-	part.Shape = shape
 	part.Transparency = 0
 
 	return part
