@@ -134,9 +134,9 @@ function Performance.benchmark(): string
 		marks:resize(sample)
 	end)
 
-	for _ = 1, 20 do marks:step(FRAME) end
+	for _ = 1, 20 do marks:step(FRAME, drops) end
 
-	measure(timings, `Marks:step, {#marks.list} open marks`, 200, function() marks:step(FRAME) end)
+	measure(timings, `Marks:step, {#marks.list} open marks`, 200, function() marks:step(FRAME, drops) end)
 	measure(timings, `Marks:regrid, {#marks.list} marks`, 100, function() marks:regrid() end)
 
 	settings.MaxMarks = #marks.list

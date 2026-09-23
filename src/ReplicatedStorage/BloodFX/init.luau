@@ -168,7 +168,7 @@ const function step(dt: number)
 	for _, emitter in emitters do emitter:step(dt) end
 
 	drops:step(dt)
-	marks:step(dt)
+	marks:step(dt, drops)
 end
 
 -- init

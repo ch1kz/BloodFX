@@ -74,6 +74,18 @@ return table.freeze({
 	-- ceiling. Default: 0.2.
 	CeilingPooling = 0.2,
 
+	-- Pools on ceilings and overhangs drip. Every drop that falls leaves the pool a little smaller,
+	-- until it is down to the stain a single drop would leave. Default: true.
+	CeilingDrip = true,
+
+	-- Drops a second that a pool on a flat ceiling lets fall. The less a surface overhangs, the
+	-- slower its pools drip, down to none at CeilingDripAngle. Default: 0.5.
+	CeilingDripRate = 0.5,
+
+	-- The least tilt at which pools drip, in degrees from the floor: 90 is a wall, 180 a ceiling.
+	-- Default: 120.
+	CeilingDripAngle = 120,
+
 	-- Drops fly through anything with this tag and everything inside it. Read once at start.
 	-- Default: "BloodIgnore".
 	IgnoreTag = "BloodIgnore",

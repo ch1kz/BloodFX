@@ -25,6 +25,7 @@ const MERGE_ALIGNMENT = 0.7
 const PLANE_TOLERANCE = 0.25
 const RIM_POINTS = 8
 const MAX_ELONGATION = 3
+const DRIP_RADIUS = NumberRange.new(0.1, 0.15)
 const NO_MARKS: { Mark } = table.freeze({})
 
 const RIM: { Vector3 } = table.create(RIM_POINTS)
@@ -252,6 +253,27 @@ function Marks:trim()
 	end
 end
 
+function Marks:drip(mark: Mark, drops)
+	const settings = self.settings
+	const radius = random:NextNumber(DRIP_RADIUS.Min, DRIP_RADIUS.Max)
+	const stain = radius * settings.MarkScale.Min
+
+	if mark.radius <= stain then return end
+
+	-- Dripping undoes a merge: the pool gives back the area a drop this size adds when it joins.
+	mark.radius = math.max(math.sqrt(mark.radius ^ 2 - (stain * settings.MergeGrowth) ^ 2), stain)
+	self:resize(mark)
+
+	-- Gravity without its part into the surface points down the slope, so the drop leaves from the
+	-- low side of the pool. On a flat ceiling nothing is left of it and the drop leaves the middle.
+	const frame = mark.part.CFrame
+	const normal = frame.RightVector
+	const downhill = normal * normal.Y - Vector3.yAxis
+	const start = frame.Position + downhill * mark.radius + normal * (radius + settings.MarkThickness)
+
+	drops:launch(start, Vector3.zero, radius)
+end
+
 function Marks:regrid()
 	const settings = self.settings
 	const loose = {}
@@ -272,8 +294,14 @@ function Marks:clear()
 	for index = #self.list, 1, -1 do self:remove(index) end
 end
 
-@native function Marks:step(dt: number)
+@native function Marks:step(dt: number, drops)
 	const settings = self.settings
+
+	-- normal.Y is the cosine of a surface's tilt. Pools drip where it falls below the cosine of
+	-- CeilingDripAngle, and the chance climbs linearly from nothing there to the full rate at -1,
+	-- a flat ceiling.
+	const edge = math.cos(math.rad(settings.CeilingDripAngle))
+	const chance = if settings.CeilingDrip then settings.CeilingDripRate * dt / math.max(edge + 1, 1e-3) else 0
 
 	for index = #self.list, 1, -1 do
 		const mark = self.list[index]
@@ -290,6 +318,8 @@ end
 			self:remove(index)
 		elseif faded > 0 then
 			mark.part.Transparency = faded
+		elseif mark.normal.Y < edge and random:NextNumber() < (edge - mark.normal.Y) * chance then
+			self:drip(mark, drops)
 		end
 	end
 end

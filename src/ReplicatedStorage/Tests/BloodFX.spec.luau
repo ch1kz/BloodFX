@@ -242,6 +242,57 @@ test("SlantStretch at 0 keeps slanted marks round", function()
 	expect(math.abs(mark.Size.Z - mark.Size.Y) < 0.01, `the mark is {mark.Size.Y} wide and {mark.Size.Z} long`)
 end)
 
+test("a pool on a ceiling drips and shrinks", function()
+	const ceiling = block(Vector3.new(6, 0.4, 6), Vector3.new(-20, HEIGHT + 6.2, -60))
+	const onCeiling = Vector3.new(-20, HEIGHT + 6, -60)
+
+	BloodFX.set("CeilingDripRate", 0)
+	BloodFX.mark(onCeiling, DOWN, 0.5)
+	task.wait(0.3)
+
+	const pool = markNear(onCeiling)
+	const before = pool and pool.Size.Y
+
+	BloodFX.set("CeilingDripRate", 20)
+	task.wait(1)
+	BloodFX.set("CeilingDripRate", Config.CeilingDripRate)
+
+	local below = 0
+	for _, part in workspace.BloodFX.Parts:GetChildren() do
+		if flat(part) and (part.Position - Vector3.new(-20, HEIGHT, -60)).Magnitude < 2 then below += 1 end
+	end
+
+	const after = pool and pool.Size.Y
+	ceiling:Destroy()
+
+	expect(pool, "the pool on the ceiling is missing")
+	expect(after < before, `the pool stayed {after} across while it dripped`)
+	expect(below > 0, "nothing that dripped reached the floor")
+end)
+
+test("pools drip only past CeilingDripAngle and with CeilingDrip on", function()
+	const wall = block(Vector3.new(0.4, 6, 6), Vector3.new(-20, HEIGHT + 3, -80))
+	const ceiling = block(Vector3.new(6, 0.4, 6), Vector3.new(0, HEIGHT + 6.2, -80))
+
+	BloodFX.set("CeilingDripRate", 50)
+	BloodFX.mark(Vector3.new(-19.8, HEIGHT + 3, -80), Vector3.xAxis, 0.5)
+	task.wait(0.5)
+	const fromWall = BloodFX.stats().drops
+
+	BloodFX.set("CeilingDrip", false)
+	BloodFX.mark(Vector3.new(0, HEIGHT + 6, -80), DOWN, 0.5)
+	task.wait(0.5)
+	const switchedOff = BloodFX.stats().drops
+
+	BloodFX.set("CeilingDrip", Config.CeilingDrip)
+	BloodFX.set("CeilingDripRate", Config.CeilingDripRate)
+	wall:Destroy()
+	ceiling:Destroy()
+
+	expect(fromWall == 0, `a pool on a wall dripped {fromWall} drops`)
+	expect(switchedOff == 0, `a ceiling pool dripped {switchedOff} drops with CeilingDrip off`)
+end)
+
 test("the ignore tag lets drops fall through", function()
 	const plate = block(Vector3.new(10, 0.2, 10), Vector3.new(60, HEIGHT + 2, 60))
 	plate:AddTag(Config.IgnoreTag)
