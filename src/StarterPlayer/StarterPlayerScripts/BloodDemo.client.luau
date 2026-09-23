@@ -6,8 +6,10 @@ const UserInputService = game:GetService("UserInputService")
 const BloodFX = require(ReplicatedStorage:WaitForChild("BloodFX"))
 
 const CLICK_REACH = 500
-const TRAIL_RADIUS = 5
+const TRAIL_RADIUS = 4.5
+const TRAIL_WANDER = 1.5
 const TRAIL_SPEED = 0.9
+const TRAIL_DRIFT = 0.53
 const TARGET_TRAVEL = 7
 const TARGET_PERIOD = 9
 const MONITOR_INTERVAL = 0.25
@@ -27,8 +29,11 @@ const function trail(part: BasePart)
 	BloodFX.emitter(wound, "Drip").rate = 14
 
 	const motion = RunService.Heartbeat:Connect(function()
-		const angle = os.clock() * TRAIL_SPEED
-		wound.Position = Vector3.new(math.cos(angle), 0, math.sin(angle)) * TRAIL_RADIUS
+		const time = os.clock()
+		const angle = time * TRAIL_SPEED
+		const radius = TRAIL_RADIUS + math.sin(time * TRAIL_DRIFT) * TRAIL_WANDER
+
+		wound.Position = Vector3.new(math.cos(angle), 0, math.sin(angle)) * radius
 	end)
 
 	wound.Destroying:Once(function() motion:Disconnect() end)
