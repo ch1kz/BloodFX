@@ -13,6 +13,7 @@ const Types = require(script.Types)
 export type Config = Types.Config
 export type Emitter = Types.Emitter
 export type Origin = Types.Origin
+export type Overrides = Types.Overrides
 export type Preset = Types.Preset
 export type PresetName = keyof<typeof(Presets)>
 export type SettingName = Types.SettingName
@@ -45,10 +46,16 @@ const configuration = if settings.DynamicSettings then Instance.new("Configurati
 
 const emitters: { Emitter } = {}
 
-const function resolve(preset: PresetName | Preset): Preset
-	if typeof(preset) ~= "string" then return preset end
+const function resolve(preset: PresetName | Preset, overrides: Overrides?): Preset
+	const base = if typeof(preset) == "string" then Presets[preset] else preset
 
-	return Presets[preset] or error(`[BloodFX] unknown preset "{preset}"`, 3)
+	if not base then error(`[BloodFX] unknown preset "{preset}"`, 3) end
+	if not overrides then return base end
+
+	const merged = table.clone(base)
+	for key, value in overrides do merged[key] = value end
+
+	return merged
 end
 
 const function spray(position: Vector3, direction: Vector3, shape: Spray, strength: number)
@@ -106,8 +113,8 @@ end
 
 const BloodFX = {}
 
-function BloodFX.spray(position: Vector3, direction: Vector3, preset: (PresetName | Preset)?)
-	spray(position, direction, resolve(preset or "Hit"), 1)
+function BloodFX.spray(position: Vector3, direction: Vector3, preset: (PresetName | Preset)?, overrides: Overrides?)
+	spray(position, direction, resolve(preset or "Hit", overrides), 1)
 end
 
 function BloodFX.mark(position: Vector3, normal: Vector3, radius: number?)
@@ -117,8 +124,8 @@ function BloodFX.mark(position: Vector3, normal: Vector3, radius: number?)
 	marks:add(position, unit, -unit, radius or 0.25)
 end
 
-function BloodFX.emitter(origin: Origin, preset: (PresetName | Preset)?): Emitter
-	return Emitter.new(origin, resolve(preset or "Drip"), spray, emitters)
+function BloodFX.emitter(origin: Origin, preset: (PresetName | Preset)?, overrides: Overrides?): Emitter
+	return Emitter.new(origin, resolve(preset or "Drip", overrides), spray, emitters)
 end
 
 function BloodFX.get(key: SettingName): any

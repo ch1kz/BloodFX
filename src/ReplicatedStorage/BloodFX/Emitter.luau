@@ -10,22 +10,18 @@ local Emitter = {}
 Emitter.__index = Emitter
 
 function Emitter.new(origin: Types.Origin, preset: Types.Preset, spray: Sprayer, emitters: { any })
-	const self = setmetatable({
-		origin = origin,
-		enabled = true,
-		count = preset.count,
-		speed = preset.speed,
-		spread = preset.spread,
-		radius = preset.radius,
-		direction = preset.direction or Vector3.yAxis,
-		rate = preset.rate or 1,
-		rateJitter = preset.rateJitter or 0,
-		pulseRate = preset.pulseRate or 0,
-		pulseDepth = preset.pulseDepth or 0,
-		spray = spray,
-		emitters = emitters,
-		due = 0,
-	}, Emitter)
+	const self = setmetatable(table.clone(preset) :: any, Emitter)
+
+	self.origin = origin
+	self.enabled = true
+	self.direction = preset.direction or Vector3.yAxis
+	self.rate = preset.rate or 1
+	self.rateJitter = preset.rateJitter or 0
+	self.strength = 1
+	self.age = 0
+	self.spray = spray
+	self.emitters = emitters
+	self.due = 0
 
 	if typeof(origin) == "Instance" then
 		self.connection = origin.Destroying:Once(function() self:destroy() end)
@@ -47,14 +43,13 @@ end
 
 function Emitter:emit()
 	const frame = self:frame()
-
-	-- A sine wave around 1: speed swings by pulseDepth either way, pulseRate times a second.
-	const strength = 1 + self.pulseDepth * math.sin(os.clock() * self.pulseRate * 2 * math.pi)
-
-	self.spray(frame.Position, frame:VectorToWorldSpace(self.direction), self, strength)
+	self.spray(frame.Position, frame:VectorToWorldSpace(self.direction), self, self.strength)
 end
 
 function Emitter:step(dt: number)
+	self.age += dt
+	if self.update then self.update(self, self.age) end
+
 	if not self.enabled or self.rate <= 0 then return end
 
 	const jitter = math.clamp(self.rateJitter, 0, MAX_JITTER)

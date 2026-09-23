@@ -41,7 +41,13 @@ return table.freeze({
 		direction = Vector3.new(0, 1, -0.4),
 		rate = 20,
 		rateJitter = 0.35,
-		pulseRate = 1.2,
-		pulseDepth = 0.6,
+		beats = 1.2,
+		swing = 0.6,
+
+		update = function(emitter, time: number)
+			-- A sine around 1: beats times a second the blood is thrown faster and then sags, by swing
+			-- of its speed either way.
+			emitter.strength = 1 + math.sin(time * emitter.beats * 2 * math.pi) * emitter.swing
+		end,
 	}),
 })

@@ -13,6 +13,7 @@ const TRAIL_DRIFT = 0.53
 const TARGET_TRAVEL = 7
 const TARGET_PERIOD = 9
 const MONITOR_INTERVAL = 0.25
+const CLICK_SPRAY = { count = NumberRange.new(12, 20) }
 
 const player = Players.LocalPlayer
 const sources = workspace:WaitForChild("Sources")
@@ -26,7 +27,7 @@ const function trail(part: BasePart)
 	wound.Name = "Wound"
 	wound.Parent = part
 
-	BloodFX.emitter(wound, "Drip").rate = 14
+	BloodFX.emitter(wound, "Drip", { rate = 14 })
 
 	const motion = RunService.Heartbeat:Connect(function()
 		const time = os.clock()
@@ -40,7 +41,7 @@ const function trail(part: BasePart)
 end
 
 const STATIONS: { (BasePart) -> () } = {
-	function(part) BloodFX.emitter(part, "Hit").direction = Vector3.new(0, 0.6, -1) end,
+	function(part) BloodFX.emitter(part, "Hit", { direction = Vector3.new(0, 0.6, -1) }) end,
 	function(part) BloodFX.emitter(part, "Drip") end,
 	function(part) BloodFX.emitter(part, "Jet") end,
 	function(part) BloodFX.emitter(part, "Fountain") end,
@@ -89,7 +90,7 @@ UserInputService.InputBegan:Connect(function(input: InputObject, processed: bool
 	clickParams.FilterDescendantsInstances = { player.Character }
 
 	const hit = workspace:Raycast(ray.Origin, ray.Direction * CLICK_REACH, clickParams)
-	if hit then BloodFX.spray(hit.Position + hit.Normal * 0.25, hit.Normal, "Hit") end
+	if hit then BloodFX.spray(hit.Position + hit.Normal * 0.25, hit.Normal, "Hit", CLICK_SPRAY) end
 end)
 
 sweep(stations:WaitForChild("Station3"):WaitForChild("JetTarget") :: Model)

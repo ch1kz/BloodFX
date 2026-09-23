@@ -89,6 +89,14 @@ test("an unknown preset is an error", function()
 	expect(not ok and string.find(message, "unknown preset"), "spraying a missing preset did not fail")
 end)
 
+test("overrides change a preset for one call and leave it as it was", function()
+	BloodFX.spray(ABOVE, DOWN, "Hit", { count = NumberRange.new(30, 30) })
+	const thrown = BloodFX.stats().drops
+
+	expect(thrown == 30, `{thrown} drops instead of the 30 the override asked for`)
+	expect(Presets.Hit.count.Max < 30, "the override changed the Hit preset itself")
+end)
+
 test("drops land and leave marks", function()
 	BloodFX.spray(ABOVE, DOWN, "Hit")
 	expect(BloodFX.stats().drops > 0, "the spray threw nothing")
@@ -435,6 +443,45 @@ test("an emitter bleeds, pauses and dies with its origin", function()
 	origin:Destroy()
 	task.wait()
 	expect(BloodFX.stats().emitters == before, "the emitter outlived its origin")
+end)
+
+test("an emitter takes overrides and runs its preset's update every frame", function()
+	local calls, seen = 0, 0
+
+	const emitter = BloodFX.emitter(CFrame.new(0, HEIGHT + 50, 0), "Drip", {
+		rate = 0,
+		mood = "custom",
+		update = function(_, time: number)
+			calls += 1
+			seen = time
+		end,
+	})
+
+	task.wait(0.3)
+	emitter:destroy()
+
+	expect(emitter.rate == 0, "the rate override did not reach the emitter")
+	expect((emitter :: any).mood == "custom", "a field of the preset's own did not reach the emitter")
+	expect(calls > 3 and seen > 0.1, `update ran {calls} times and last saw {seen} seconds`)
+end)
+
+test("the Fountain's heartbeat lives in its preset and takes its values", function()
+	const pulsing = BloodFX.emitter(CFrame.new(0, HEIGHT + 50, 0), "Fountain", { rate = 0 })
+	const steady = BloodFX.emitter(CFrame.new(0, HEIGHT + 50, 0), "Fountain", { rate = 0, swing = 0 })
+	local low, high = math.huge, -math.huge
+
+	for _ = 1, 20 do
+		task.wait()
+		low = math.min(low, pulsing.strength)
+		high = math.max(high, pulsing.strength)
+	end
+
+	const flat = steady.strength
+	pulsing:destroy()
+	steady:destroy()
+
+	expect(high - low > 0.3, `strength only swung between {low} and {high}`)
+	expect(flat == 1, `swing 0 still gave a strength of {flat}`)
 end)
 
 test("destroy removes an emitter", function()

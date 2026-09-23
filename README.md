@@ -31,30 +31,30 @@ The module sets itself up the first time it is required.
 local BloodFX = require(ReplicatedStorage.BloodFX)
 
 BloodFX.spray(result.Position, result.Normal, "Hit")
+BloodFX.spray(result.Position, result.Normal, "Hit", { count = NumberRange.new(12, 20) })
 
-local wound = BloodFX.emitter(character.UpperTorso, "Fountain")
-wound.rate = 30
+local wound = BloodFX.emitter(character.UpperTorso, "Fountain", { beats = 2 })
 wound:destroy()
 ```
 
 | Call | Does |
 | --- | --- |
-| `spray(position, direction, preset?)` | Throws a cone of drops. `preset` is a preset name, a table of the same shape, or nil for `Hit`. |
+| `spray(position, direction, preset?, overrides?)` | Throws a cone of drops. `preset` is a preset name, a table of the same shape, or nil for `Hit`; `overrides` replaces some of its values for this call. |
 | `mark(position, normal, radius?)` | Puts a mark straight onto a surface. |
-| `emitter(origin, preset?)` | Starts a continuous source and returns its `Emitter`. `origin` is a `PVInstance`, an `Attachment` or a `CFrame`; nil preset is `Drip`. |
+| `emitter(origin, preset?, overrides?)` | Starts a continuous source and returns its `Emitter`. `origin` is a `PVInstance`, an `Attachment` or a `CFrame`; nil preset is `Drip`, and `overrides` works as for `spray`. |
 | `get(key)` / `set(key, value)` | Reads or changes a setting by name. `set` needs `Config.DynamicSettings` and checks the type. |
 | `clear()` / `fade()` | Removes all blood at once, or lets every mark fade out. |
 | `freeze()` / `unfreeze()` / `isFrozen()` | Switches blood off and back on. Freezing clears what is there and silences emitters without removing them. It is the `Frozen` setting, so the attribute on the Config shows it and can flip it too. |
 | `stats()` | `drops`, `marks`, `emitters` and `parts` right now. |
 
-An `Emitter` exposes everything it emits with - `enabled`, `rate`, `rateJitter`, `pulseRate`,
-`pulseDepth`, `direction`, `count`, `speed`, `spread`, `radius`, `origin` - and each can be changed
-while it runs. `emit()` fires once regardless of the rate, `frame()` is where it sits now, and
-`destroy()` removes it. An emitter on an instance is destroyed together with that instance.
+An `Emitter` carries every field of its preset, plus `origin`, `enabled`, `strength` (a multiplier on
+the speed of each emission) and `age` in seconds, and each can be changed while it runs. `emit()`
+fires once regardless of the rate, `frame()` is where it sits now, and `destroy()` removes it. An
+emitter on an instance is destroyed together with that instance.
 
 Preset names and setting names are typed as `PresetName` and `SettingName`, so Studio offers them in
 autocomplete wherever the API asks for one. The module exports those two alongside `Config`,
-`Emitter`, `Origin`, `Preset`, `Spray` and `Stats`.
+`Emitter`, `Origin`, `Overrides`, `Preset`, `Spray` and `Stats`.
 
 ## Config
 
@@ -79,9 +79,15 @@ marks on the same part and goes away when that part leaves the world.
 ## Presets
 
 A preset is a spray shape - `count`, `speed`, `spread` in degrees, `radius` - and, for an emitter,
-how it runs: `direction` in the origin's space, `rate` per second,
-`rateJitter`, `pulseRate` in Hz and `pulseDepth`. Every preset works with both `spray` and
-`emitter`; an emitter fills what a preset leaves out (one emission a second, upwards, no pulse).
+how it runs: `direction` in the origin's space, `rate` per second and `rateJitter`. Every preset
+works with both `spray` and `emitter`; an emitter fills what a preset leaves out (one emission a
+second, upwards).
+
+A preset can also carry its own logic and values. `update(emitter, time)` runs every frame for an
+emitter and may change anything on it, and any other field of the preset lands on the emitter for
+`update` to read. `Fountain` keeps its heartbeat that way: `beats` a second and `swing`, which its
+`update` turns into `strength`. Overrides reach these fields like any other, so
+`{ beats = 2 }` gives a faster pulse and `{ swing = 0 }` none.
 
 | One-off | | Emitter | |
 | --- | --- | --- | --- |

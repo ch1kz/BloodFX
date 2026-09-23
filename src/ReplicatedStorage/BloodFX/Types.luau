@@ -41,12 +41,24 @@ export type Spray = {
 	radius: NumberRange,
 }
 
+type Update = (emitter: Emitter, time: number) -> ()
+
 export type Preset = Spray & {
 	direction: Vector3?,
 	rate: number?,
 	rateJitter: number?,
-	pulseRate: number?,
-	pulseDepth: number?,
+	update: Update?,
+}
+
+export type Overrides = {
+	count: NumberRange?,
+	speed: NumberRange?,
+	spread: number?,
+	radius: NumberRange?,
+	direction: Vector3?,
+	rate: number?,
+	rateJitter: number?,
+	update: Update?,
 }
 
 export type Emitter = Spray & {
@@ -55,8 +67,9 @@ export type Emitter = Spray & {
 	direction: Vector3,
 	rate: number,
 	rateJitter: number,
-	pulseRate: number,
-	pulseDepth: number,
+	strength: number,
+	age: number,
+	update: Update?,
 
 	frame: (self: Emitter) -> CFrame,
 	emit: (self: Emitter) -> (),
