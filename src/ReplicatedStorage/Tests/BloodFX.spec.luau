@@ -97,9 +97,20 @@ test("a pool stays on the part it lies on", function()
 
 	const pool = markNear(top)
 	pedestal:Destroy()
-
 	expect(pool, "the pool is missing")
-	expect(pool.Size.Y <= 2.2 and pool.Size.Z <= 2.2, `the pool grew to {pool.Size} past a 2x2 top`)
+
+	-- Walk the oval's rim and find how far it reaches past the edges of the 2x2 top.
+	local overhang = 0
+
+	for step = 1, 64 do
+		const angle = step * 2 * math.pi / 64
+		const onRim = Vector3.new(0, math.cos(angle) * pool.Size.Y, math.sin(angle) * pool.Size.Z) / 2
+		const offset = pool.CFrame:PointToWorldSpace(onRim) - top
+
+		overhang = math.max(overhang, math.abs(offset.X) - 1, math.abs(offset.Z) - 1)
+	end
+
+	expect(overhang <= 0.1, `the pool hangs {overhang} studs past the top`)
 end)
 
 test("MaxMarks caps the count", function()
