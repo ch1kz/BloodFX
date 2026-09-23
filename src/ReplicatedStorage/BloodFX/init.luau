@@ -7,12 +7,15 @@ const Drops = require(script.Drops)
 const Emitter = require(script.Emitter)
 const Marks = require(script.Marks)
 const Pool = require(script.Pool)
+const Presets = require(script.Presets)
 const Types = require(script.Types)
 
 export type Config = Types.Config
 export type Emitter = Types.Emitter
 export type Origin = Types.Origin
 export type Preset = Types.Preset
+export type PresetName = keyof<typeof(Presets)>
+export type SettingName = Types.SettingName
 export type Spray = Types.Spray
 export type Stats = Types.Stats
 
@@ -40,15 +43,14 @@ const marks = Marks.new(pool, settings, params)
 const drops = Drops.new(pool, marks, settings, params)
 const configuration = if settings.DynamicSettings then Instance.new("Configuration") else nil
 
-const presets: { [string]: Preset } = {}
 const emitters: { Emitter } = {}
 
 local frozen = false
 
-const function resolve(preset: Preset | string): Preset
+const function resolve(preset: PresetName | Preset): Preset
 	if typeof(preset) ~= "string" then return preset end
 
-	return presets[preset] or error(`[BloodFX] unknown preset "{preset}"`, 3)
+	return Presets[preset] or error(`[BloodFX] unknown preset "{preset}"`, 3)
 end
 
 const function spray(position: Vector3, direction: Vector3, shape: Spray, strength: number)
@@ -94,7 +96,7 @@ end
 
 const BloodFX = {}
 
-function BloodFX.spray(position: Vector3, direction: Vector3, preset: (Preset | string)?)
+function BloodFX.spray(position: Vector3, direction: Vector3, preset: (PresetName | Preset)?)
 	spray(position, direction, resolve(preset or "Hit"), 1)
 end
 
@@ -104,15 +106,15 @@ function BloodFX.mark(position: Vector3, normal: Vector3, radius: number?)
 	marks:add(position, normal.Unit, radius or 0.25)
 end
 
-function BloodFX.emitter(origin: Origin, preset: (Preset | string)?): Emitter
+function BloodFX.emitter(origin: Origin, preset: (PresetName | Preset)?): Emitter
 	return Emitter.new(origin, resolve(preset or "Drip"), spray, emitters)
 end
 
-function BloodFX.get(key: string): any
+function BloodFX.get(key: SettingName): any
 	return settings[key]
 end
 
-function BloodFX.set(key: string, value: any)
+function BloodFX.set(key: SettingName, value: any)
 	if not configuration then error("[BloodFX] settings are fixed, turn on Config.DynamicSettings to change them", 2) end
 	if not accepts(key, value) then error(`[BloodFX] {key} cannot be set to {value}`, 2) end
 
@@ -161,10 +163,6 @@ const function step(dt: number)
 end
 
 -- init
-
-for _, module in script.Presets:GetChildren() do
-	presets[module.Name] = require(module)
-end
 
 if configuration then
 	configuration.Name = "Config"

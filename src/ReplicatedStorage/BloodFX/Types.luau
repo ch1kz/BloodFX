@@ -23,6 +23,8 @@ export type Config = {
 	CharacterTag: string,
 }
 
+export type SettingName = keyof<Config>
+
 export type Origin = PVInstance | Attachment | CFrame
 
 export type Spray = {
