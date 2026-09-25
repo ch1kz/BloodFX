@@ -3,6 +3,7 @@ const Players = game:GetService("Players")
 const RunService = game:GetService("RunService")
 
 const Config = require(script.Config)
+const Debugger = require(script.Debugger)
 const Drops = require(script.Drops)
 const Emitter = require(script.Emitter)
 const Marks = require(script.Marks)
@@ -11,6 +12,8 @@ const Presets = require(script.Presets)
 const Types = require(script.Types)
 
 export type Config = Types.Config
+export type DebugEvent = Types.DebugEvent
+export type Debugger = Types.Debugger
 export type Emitter = Types.Emitter
 export type Origin = Types.Origin
 export type Overrides = Types.Overrides
@@ -38,9 +41,10 @@ params.IgnoreWater = true
 const root = Instance.new("Folder")
 root.Name = "BloodFX"
 
-const pool = Pool.new(root, settings.PoolSize, settings.Color, settings.Material)
-const marks = Marks.new(pool, settings, params)
-const drops = Drops.new(pool, marks, settings, params)
+const debugger = Debugger.new(settings)
+const pool = Pool.new(root, settings.PoolSize, settings.Color, settings.Material, debugger)
+const marks = Marks.new(pool, settings, params, debugger)
+const drops = Drops.new(pool, marks, settings, params, debugger)
 const configuration = if settings.DynamicSettings then Instance.new("Configuration") else nil
 
 const emitters: { Emitter } = {}
@@ -116,7 +120,9 @@ const function setFrozen(frozen: boolean)
 	apply("Frozen", frozen)
 end
 
-const BloodFX = {}
+const BloodFX = {
+	debugger = debugger :: Debugger,
+}
 
 function BloodFX.spray(position: Vector3, direction: Vector3, preset: (PresetName | Preset)?, overrides: (Overrides | number)?)
 	spray(position, direction, resolve(preset or "Hit", overrides), 1)

@@ -605,6 +605,63 @@ test("PoolSize resizes the pool while the game runs and leaves parts in use alon
 	expect(restored == Config.PoolSize, `{restored} parts after PoolSize went back to {Config.PoolSize}`)
 end)
 
+test("the debugger reports a pool that runs out and limits that are hit", function()
+	const heard: { [string]: BloodFX.DebugEvent } = {}
+	const connection = BloodFX.debugger:Connect(function(event) heard[event.kind] = event end)
+
+	BloodFX.set("PoolSize", 0)
+	settle(0)
+	BloodFX.mark(Vector3.new(0, HEIGHT, 70), UP, 0.3)
+	BloodFX.set("PoolSize", Config.PoolSize)
+	BloodFX.clear()
+	settle(Config.PoolSize)
+
+	BloodFX.set("MaxDrops", 5)
+	BloodFX.spray(ABOVE, DOWN, "Hit", 10)
+	BloodFX.set("MaxDrops", Config.MaxDrops)
+
+	BloodFX.set("MaxMarks", 2)
+	for index = 1, 3 do BloodFX.mark(Vector3.new(index * 10, HEIGHT, 70), UP, 0.3) end
+	BloodFX.set("MaxMarks", Config.MaxMarks)
+
+	task.wait()
+	connection:Disconnect()
+
+	const expanded, drop, mark = heard.PoolExpanded, heard.DropLimit, heard.MarkLimit
+	expect(expanded and expanded.parts == 1 and expanded.limit == 0, "no PoolExpanded for a part made on the spot")
+	expect(drop and drop.limit == 5 and drop.age == 0, "no DropLimit when MaxDrops pushed out a drop")
+	expect(mark and mark.limit == 2 and mark.age == 0, "no MarkLimit when MaxMarks pushed out a mark")
+end)
+
+test("the debugger stays quiet with Debug off and after a listener disconnects", function()
+	local calls = 0
+	const connection = BloodFX.debugger:Connect(function() calls += 1 end)
+	const pushOut = function()
+		BloodFX.clear()
+		BloodFX.set("MaxMarks", 1)
+		for index = 1, 2 do BloodFX.mark(Vector3.new(index * 10, HEIGHT, 80), UP, 0.3) end
+		BloodFX.set("MaxMarks", Config.MaxMarks)
+		task.wait()
+	end
+
+	BloodFX.set("Debug", false)
+	pushOut()
+	BloodFX.set("Debug", true)
+	const whileOff = calls
+
+	pushOut()
+	const whileOn = calls
+
+	connection:Disconnect()
+	pushOut()
+	const afterDisconnect = calls
+
+	BloodFX.set("Debug", Config.Debug)
+	expect(whileOff == 0, `{whileOff} events reached a listener with Debug off`)
+	expect(whileOn == 1, `{whileOn} events instead of 1 with Debug on`)
+	expect(afterDisconnect == 1 and not connection.Connected, "a disconnected listener still heard events")
+end)
+
 test("clear hands every part back to the pool", function()
 	BloodFX.spray(ABOVE, DOWN, "Burst")
 	task.wait(0.2)

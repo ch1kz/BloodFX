@@ -5,6 +5,7 @@ const Package = ReplicatedStorage.BloodFX
 
 const BloodFX = require(Package)
 const Config = require(Package.Config)
+const Debugger = require(Package.Debugger)
 const Drops = require(Package.Drops)
 const Emitter = require(Package.Emitter)
 const Grid = require(Package.Grid)
@@ -85,9 +86,10 @@ function Performance.benchmark(): string
 	params.FilterType = Enum.RaycastFilterType.Exclude
 	params.RespectCanCollide = true
 
-	const pool = Pool.new(world, settings.PoolSize, settings.Color, settings.Material)
-	const marks = Marks.new(pool, settings, params)
-	const drops = Drops.new(pool, marks, settings, params)
+	const debugger = Debugger.new(settings)
+	const pool = Pool.new(world, settings.PoolSize, settings.Color, settings.Material, debugger)
+	const marks = Marks.new(pool, settings, params, debugger)
+	const drops = Drops.new(pool, marks, settings, params, debugger)
 
 	const parts = table.create(500)
 	measure(timings, "Pool:take", 500, function(index) parts[index] = pool:take() end)
@@ -278,6 +280,7 @@ function Performance.profile(seconds: number): string
 	track(Marks, "Marks:")
 	track(Drops, "Drops:")
 	track(Emitter, "Emitter:")
+	track(Debugger, "Debugger:")
 
 	local frames = 0
 	const counter = RunService.Heartbeat:Connect(function() frames += 1 end)

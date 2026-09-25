@@ -1,6 +1,7 @@
 export type Config = {
 	DynamicSettings: boolean,
 	Frozen: boolean,
+	Debug: boolean,
 	PoolSize: number,
 	Color: Color3,
 	Material: Enum.Material,
@@ -84,6 +85,30 @@ export type Stats = {
 	emitters: number,
 	parts: number,
 	spare: number,
+}
+
+export type DebugEvent = {
+	kind: "PoolExpanded",
+	parts: number,
+	limit: number,
+} | {
+	kind: "DropLimit",
+	age: number,
+	limit: number,
+} | {
+	kind: "MarkLimit",
+	age: number,
+	limit: number,
+}
+
+export type Connection = {
+	Connected: boolean,
+
+	Disconnect: (self: Connection) -> (),
+}
+
+export type Debugger = {
+	Connect: (self: Debugger, listener: (event: DebugEvent) -> ()) -> Connection,
 }
 
 return {}

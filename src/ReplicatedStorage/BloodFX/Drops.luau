@@ -26,12 +26,13 @@ end
 local Drops = {}
 Drops.__index = Drops
 
-function Drops.new(pool, marks, settings: Types.Config, params: RaycastParams)
+function Drops.new(pool, marks, settings: Types.Config, params: RaycastParams, debugger)
 	return setmetatable({
 		pool = pool,
 		marks = marks,
 		settings = settings,
 		params = params,
+		debugger = debugger,
 		list = {} :: { Drop },
 		movedParts = {} :: { BasePart },
 		movedFrames = {} :: { CFrame },
@@ -93,7 +94,13 @@ function Drops:remove(index: number)
 end
 
 function Drops:trim()
-	while #self.list > self.settings.MaxDrops do self:remove(1) end
+	const list = self.list
+	const limit = self.settings.MaxDrops
+
+	while #list > limit do
+		self.debugger:fire({ kind = "DropLimit", age = list[1].age, limit = limit })
+		self:remove(1)
+	end
 end
 
 function Drops:clear()

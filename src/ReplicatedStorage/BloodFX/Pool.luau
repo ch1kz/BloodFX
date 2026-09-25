@@ -4,7 +4,7 @@ const RESIZE_BUDGET = 1e-3
 local Pool = {}
 Pool.__index = Pool
 
-function Pool.new(parent: Instance, size: number, color: Color3, material: Enum.Material)
+function Pool.new(parent: Instance, size: number, color: Color3, material: Enum.Material, debugger)
 	const container = Instance.new("Folder")
 	container.Name = "Parts"
 	container.Parent = parent
@@ -27,6 +27,7 @@ function Pool.new(parent: Instance, size: number, color: Color3, material: Enum.
 	const self = setmetatable({
 		container = container,
 		template = template,
+		debugger = debugger,
 		size = math.floor(size),
 		total = 0,
 		idle = {} :: { BasePart },
@@ -48,8 +49,15 @@ function Pool:create(): BasePart
 end
 
 function Pool:take(): BasePart
-	const part = table.remove(self.idle) or self:create()
+	const part = table.remove(self.idle) or self:expand()
 	part.Transparency = 0
+
+	return part
+end
+
+function Pool:expand(): BasePart
+	const part = self:create()
+	self.debugger:fire({ kind = "PoolExpanded", parts = self.total, limit = self.size })
 
 	return part
 end

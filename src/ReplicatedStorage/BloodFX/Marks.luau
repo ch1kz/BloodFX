@@ -49,11 +49,12 @@ end
 local Marks = {}
 Marks.__index = Marks
 
-function Marks.new(pool, settings: Types.Config, params: RaycastParams)
+function Marks.new(pool, settings: Types.Config, params: RaycastParams, debugger)
 	return setmetatable({
 		pool = pool,
 		settings = settings,
 		params = params,
+		debugger = debugger,
 		list = {} :: { Mark },
 		attached = {} :: { [BasePart]: { Mark } },
 
@@ -241,14 +242,16 @@ end
 
 function Marks:trim()
 	const list = self.list
+	const limit = self.settings.MaxMarks
 
-	while #list > self.settings.MaxMarks do
+	while #list > limit do
 		local oldest = 1
 
 		for index, mark in list do
 			if mark.age > list[oldest].age then oldest = index end
 		end
 
+		self.debugger:fire({ kind = "MarkLimit", age = list[oldest].age, limit = limit })
 		self:remove(oldest)
 	end
 end

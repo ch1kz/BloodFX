@@ -37,9 +37,11 @@ src/ReplicatedStorage/BloodFX           the module
     Marks         blood on surfaces: merging, fitting to the surface, dripping, fading
     Drops         blood in flight: spray cone, gravity, raycast, landing
     Emitter       a continuous source on a part, attachment or CFrame
+    Debugger      reports a pool that runs out and limits that are hit
     Presets       every preset in one table
 src/ReplicatedStorage/Tests             BloodFX.spec, the tests; BloodFX.perf, benchmark and profiler
-src/StarterPlayer/StarterPlayerScripts  BloodDemo, the demo for the test place
+src/StarterPlayer/StarterPlayerScripts  BloodDemo, the demo for the test place; BloodDebug, a
+                                        debugger listener that warns
 ```
 
 ## API
@@ -64,6 +66,7 @@ wound:destroy()
 | `clear()` / `fade()` | Removes all blood at once, or starts every mark fading out now. |
 | `freeze()` / `unfreeze()` / `isFrozen()` | Switches blood off and back on. Freezing clears what is there and silences emitters without removing them. It is the `Frozen` setting, so the attribute on the Config shows it and can flip it too. |
 | `stats()` | `drops`, `marks`, `emitters`, `parts` and `spare` right now; `parts` counts every pooled part, in use or spare, and `spare` the ones waiting to be used. |
+| `debugger` | Reports when the pool runs out of spare parts and when a limit pushes out a drop or a mark; see [Debugger](#debugger). |
 
 An `Emitter` carries every field of its preset, plus `origin`, `enabled`, `strength` (a multiplier on
 the speed of each emission) and `age` in seconds, and each can be changed while it runs. `emit()`
@@ -72,7 +75,7 @@ emitter on an instance is destroyed together with that instance.
 
 Preset names and setting names are typed as `PresetName` and `SettingName`, so Studio offers them in
 autocomplete wherever the API asks for one. The module exports those two alongside `Config`,
-`Emitter`, `Origin`, `Overrides`, `Preset`, `Spray` and `Stats`.
+`DebugEvent`, `Debugger`, `Emitter`, `Origin`, `Overrides`, `Preset`, `Spray` and `Stats`.
 
 ## Presets
 
@@ -294,6 +297,36 @@ once at start and only change in `Config.luau`.
 The folder belongs to the copy of the module that made it. Blood runs on the client, so during a
 playtest look for it in the client's view. If the server requires BloodFX as well, it has a folder of
 its own, and editing that one from the client changes nothing.
+
+## Debugger
+
+`BloodFX.debugger` tells you when the settings start to get in the way:
+
+| Event | When | Fields |
+| --- | --- | --- |
+| `PoolExpanded` | the pool had no spare part left and made one on the spot | `parts`, how many it holds now; `limit`, the `PoolSize` |
+| `DropLimit` | `MaxDrops` was full, so the oldest drop was removed | `age`, the seconds that drop had flown; `limit`, the `MaxDrops` |
+| `MarkLimit` | `MaxMarks` was full, so the mark left alone longest was removed | `age`, the seconds that mark had been left alone; `limit`, the `MaxMarks` |
+
+It prints nothing itself. Connect to it as to any Roblox event and do what you like with what it
+reports:
+
+```lua
+BloodFX.debugger:Connect(function(event)
+	if event.kind == "PoolExpanded" then
+		warn(`BloodFX ran out of spare parts and grew to {event.parts}, PoolSize could be higher`)
+	end
+end)
+```
+
+Each event is a frozen table with its name in `kind`, typed as `DebugEvent`. `Connect` returns a
+connection with `Disconnect()`. Listeners run deferred, once the BloodFX work that raised the event
+is done, so a listener can call back into BloodFX without getting in its way.
+
+A limit that is hit under a steady load is hit every frame, so a listener that warns should hold
+back, say once every few seconds for each kind of event; `BloodDebug` in the demo does just that.
+`Debug` in the Config switches every report off at once, which silences the debugger in a release
+without touching the scripts that listen to it.
 
 ## Performance
 

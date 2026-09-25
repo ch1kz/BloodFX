@@ -13,6 +13,11 @@ return table.freeze({
 	-- until it is switched back on. BloodFX.freeze and unfreeze flip it too. Default: false.
 	Frozen = false,
 
+	-- Lets BloodFX.debugger report when the pool runs out of spare parts and when MaxDrops or
+	-- MaxMarks makes room by removing a drop or a mark. It prints nothing itself: connect to it to
+	-- hear about these, and switch it off here to silence every listener at once. Default: true.
+	Debug = true,
+
 	-- Spare parts made at start and kept for reuse. Changed while the game runs, the pool builds or
 	-- removes parts over the next frames, a millisecond's work at a time, so even a big change causes
 	-- no hitch. Default: 1200, 600 on phones.
