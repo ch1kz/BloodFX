@@ -83,7 +83,8 @@ function Drops:land(drop: Drop, hit: RaycastResult)
 	if tagged(surface, settings.AbsorbTag) then return end
 
 	const scale = random:NextNumber(settings.MarkScale.Min, settings.MarkScale.Max)
-	const attached = if tagged(surface, settings.AttachTag) then surface else nil
+	const loose = settings.AutoAttach and not surface:IsGrounded()
+	const attached = if loose or tagged(surface, settings.AttachTag) then surface else nil
 
 	self.marks:add(hit.Position, hit.Normal, drop.velocity, drop.radius * scale, attached)
 end

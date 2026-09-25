@@ -151,9 +151,9 @@ in mid-air, the cap is the first thing to raise.
 
 ### Landing
 
-What a drop does when it lands depends on the [tags](#tags) of what it hit: an absorbing surface
-swallows it, an attach-tagged part gets a mark welded to it, and anything else gets a plain anchored
-mark. The mark's radius is the drop's radius times a random `MarkScale`, and it opens from about a
+What a drop does when it lands depends on what it hit: an absorbing surface swallows it, a part that
+can move gets a mark welded to it (see [Marks on moving parts](#marks-on-moving-parts)), and anything
+else gets a plain anchored mark. The mark's radius is the drop's radius times a random `MarkScale`, and it opens from about a
 third of its size over `MarkOpenTime`.
 
 A drop that comes in at a slant smears. A real stain's width over its length is the sine of the angle
@@ -269,14 +269,51 @@ part or on a whole model, folder or character: whatever sits inside a tagged ins
 | --- | --- |
 | `BloodIgnore` | fly straight through, as if it was not there |
 | `BloodAbsorb` | vanish without leaving a mark |
-| `BloodAttach` | leave marks welded to the part they hit, so the marks move with it |
-
-Only marks on attach-tagged parts are welded; everything else stays an anchored part that nothing
-touches after it lands, so the rest of the map costs nothing extra. A welded mark merges only with
-marks on the same part and goes away when that part leaves the world.
+| `BloodAttach` | leave marks welded to the part they hit, so the marks move with it. Loose parts do that without the tag; see [Marks on moving parts](#marks-on-moving-parts) |
 
 The tag names are settings too, `IgnoreTag`, `AbsorbTag` and `AttachTag`, and `CharacterTag` puts one
-of them on every player's character as it spawns.
+of them on every player's character as it spawns. Characters are loose parts, so with `CharacterTag`
+set to `""` blood lands on them and sticks.
+
+## Marks on moving parts
+
+A mark on a car, a crate or a swinging door has to move with it, so BloodFX welds it to the part it
+landed on. Which marks are welded:
+
+- **Marks on loose parts, on their own.** A part that is neither anchored nor joined to anything
+  anchored can be moved by physics at any moment: a vehicle, a loose prop, a door on a hinge,
+  something hanging on a rope, a ragdoll, a character. Marks on it are welded without any setup; in
+  engine terms, the part's `IsGrounded()` is false. `AutoAttach` in the Config switches this off.
+- **Marks on anchored parts that scripts move, with the `BloodAttach` tag.** A lift, a sliding door on
+  a tween or a platform moved with `PivotTo` is anchored, and until it moves it looks exactly like a
+  wall. Tag the part, or the model it is in; tag the template in `ServerStorage` and every copy
+  carries the tag.
+- **Everything else keeps plain anchored marks**: the map, and anything welded to an anchored part,
+  since that cannot move either.
+
+A welded mark moves and turns with its part, merges only with marks on the same part, and goes away
+when the part leaves the world.
+
+### Why not weld every mark
+
+A weld costs nothing while a mark rests and a lot while it is made or changes. Measured in Studio on
+a desktop PC:
+
+| | Anchored mark | Welded mark |
+| --- | ---: | ---: |
+| Making it | 40-70 µs | 130-420 µs, more the more marks share its part |
+| Resizing it, every frame while it opens and at every merge | 8.5 µs | 50 µs |
+| Removing it | 11 µs | 32 µs |
+| Finding the pool a drop lands in | 1.5 µs | 1.5 µs |
+| 1000 marks at rest, each frame | nothing | nothing |
+| 1000 marks on a part that turns, each frame | - | about 1 ms, spent by the engine |
+
+Most blood lands on the map, and welding it would make every splash there three to six times dearer
+for nothing. On a part that moves the weld pays off: moving those 1000 marks from a script instead
+would take about 5 ms a frame.
+
+When a part that carries welded marks leaves the world, its marks go back to the pool in that frame,
+at about 55 µs each, so a part with 100 of them costs about 5 ms once.
 
 ## Config
 
@@ -335,8 +372,10 @@ without touching the scripts that listen to it.
 - Settled marks are anchored parts that nothing touches, so a floor covered in blood costs little
   more than the parts themselves; each frame BloodFX only ages them and checks the ones overhead
   for drips.
-- The pool a drop lands in is found through a spatial hash, so landing does not slow down as marks
-  pile up.
+- Marks on moving parts are welded, which costs more while a mark is made or resized and nothing
+  while it rests; see [Marks on moving parts](#marks-on-moving-parts).
+- The pool a drop lands in is found through a spatial hash, one for the world and one for each part
+  that carries welded marks, so landing does not slow down as marks pile up.
 - Parts come from the pool, so a spray reuses parts instead of creating them.
 - The maths-heavy functions are marked `@native`. Roblox compiles native code only for server
   scripts, so on the client they run as ordinary Luau.

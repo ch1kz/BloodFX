@@ -65,6 +65,25 @@ const function settle(parts: number): number
 	return BloodFX.stats().parts
 end
 
+const function carried(plate: BasePart, move: () -> ()): (number, number)
+	BloodFX.spray(plate.Position + UP * (plate.Size.Y / 2 + 2), DOWN, "Hit")
+	task.wait(1)
+
+	const marks = raisedMarks()
+	const offsets = {}
+	for _, mark in marks do offsets[mark] = plate.CFrame:PointToObjectSpace(mark.Position) end
+
+	move()
+	task.wait()
+
+	local followed = 0
+	for mark, offset in offsets do
+		if (plate.CFrame:PointToObjectSpace(mark.Position) - offset).Magnitude <= 0.01 then followed += 1 end
+	end
+
+	return #marks, followed
+end
+
 const function slantedMark(): BasePart?
 	BloodFX.spray(ABOVE, Vector3.new(1, -0.2, 0), {
 		count = NumberRange.new(1, 1),
@@ -387,6 +406,48 @@ test("the attach tag carries marks with their part", function()
 	expect(#marks > 0, "no marks landed on the plate")
 	expect(stayed == 0, `{stayed} of {#marks} marks stayed behind when the plate moved`)
 	expect(BloodFX.stats().marks == 0, "marks outlived the part they were stuck to")
+end)
+
+test("marks stick on their own to a part that physics moves", function()
+	const crate = block(Vector3.new(10, 2, 10), Vector3.new(60, HEIGHT + 1, -60))
+	crate.Anchored = false
+
+	const count, followed = carried(crate, function() crate.CFrame *= CFrame.new(0, 5, 0) end)
+	crate:Destroy()
+
+	expect(count > 0, "no marks landed on the crate")
+	expect(followed == count, `{count - followed} of {count} marks stayed behind when the crate moved`)
+end)
+
+test("a part welded to an anchored one keeps plain marks", function()
+	const base = block(Vector3.new(2, 2, 2), Vector3.new(70, HEIGHT + 1, -80))
+	const crate = block(Vector3.new(10, 2, 10), Vector3.new(60, HEIGHT + 1, -80))
+	crate.Anchored = false
+
+	const weld = Instance.new("WeldConstraint")
+	weld.Part0 = crate
+	weld.Part1 = base
+	weld.Parent = crate
+
+	const count, followed = carried(crate, function() base.CFrame *= CFrame.new(0, 5, 0) end)
+	base:Destroy()
+	crate:Destroy()
+
+	expect(count > 0, "no marks landed on the crate")
+	expect(followed == 0, `{followed} of {count} marks were welded to a crate held by an anchored part`)
+end)
+
+test("AutoAttach off leaves loose parts to the attach tag", function()
+	const crate = block(Vector3.new(10, 2, 10), Vector3.new(60, HEIGHT + 1, -60))
+	crate.Anchored = false
+
+	BloodFX.set("AutoAttach", false)
+	const count, followed = carried(crate, function() crate.CFrame *= CFrame.new(0, 5, 0) end)
+	BloodFX.set("AutoAttach", Config.AutoAttach)
+	crate:Destroy()
+
+	expect(count > 0, "no marks landed on the crate")
+	expect(followed == 0, `{followed} of {count} marks stuck to a loose crate with AutoAttach off`)
 end)
 
 test("a part leaving the world takes its own welded marks and no others", function()

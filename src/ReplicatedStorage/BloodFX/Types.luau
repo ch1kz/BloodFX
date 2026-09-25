@@ -25,6 +25,7 @@ export type Config = {
 	CeilingDrip: boolean,
 	CeilingDripRate: number,
 	CeilingDripAngle: number,
+	AutoAttach: boolean,
 	IgnoreTag: string,
 	AbsorbTag: string,
 	AttachTag: string,

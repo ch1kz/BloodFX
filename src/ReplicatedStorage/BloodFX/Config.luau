@@ -99,6 +99,11 @@ return table.freeze({
 	-- Default: 120.
 	CeilingDripAngle = 120,
 
+	-- Marks stick on their own to parts that physics can move: anything neither anchored nor joined
+	-- to something anchored, such as vehicles, loose props, doors on hinges and ragdolls. Off, only
+	-- parts with AttachTag carry marks. Default: true.
+	AutoAttach = true,
+
 	-- Drops fly through anything with this tag and everything inside it. Read once at start.
 	-- Default: "BloodIgnore".
 	IgnoreTag = "BloodIgnore",
@@ -108,10 +113,12 @@ return table.freeze({
 	AbsorbTag = "BloodAbsorb",
 
 	-- A mark landing on anything with this tag, or inside it, sticks to that part and moves with it.
-	-- Read once at start. Default: "BloodAttach".
+	-- Loose parts need no tag (AutoAttach); this is for anchored parts that scripts move, such as
+	-- lifts and doors on tweens. Read once at start. Default: "BloodAttach".
 	AttachTag = "BloodAttach",
 
-	-- Tag put on every player's character: one of the three above, or "" to leave characters alone.
-	-- Read once at start. Default: "BloodIgnore".
+	-- Tag put on every player's character: one of the three above, or "" to leave characters
+	-- untagged, so blood lands on them and, as they are loose parts, sticks. Read once at start.
+	-- Default: "BloodIgnore".
 	CharacterTag = "BloodIgnore",
 }) :: Types.Config
