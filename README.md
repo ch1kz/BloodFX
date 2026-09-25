@@ -267,8 +267,9 @@ A mark lasts `MarkLifetime` seconds, restarted by every drop that joins it, and 
 past it, the mark left alone longest makes room.
 
 Drops and marks draw their parts from a pool of `PoolSize` spare parts made at start. If more are
-needed, extras are made on the spot and destroyed when they come back to a full pool. No part casts
-a shadow or takes part in collisions, touches or raycasts, and all but the welded marks are anchored.
+needed, extras are made on the spot and destroyed when they come back to a full pool; with `PoolSize`
+at `MaxDrops` plus `MaxMarks`, as by default, that never happens. No part casts a shadow or takes
+part in collisions, touches or raycasts, and all but the welded marks are anchored.
 
 Every part is drawn with the mesh in `Mesh`, by default a public BloodFX mesh: a low-poly sphere of
 96 triangles against the 378 of the engine's own. Flattened into a mark it looks the same, an oval

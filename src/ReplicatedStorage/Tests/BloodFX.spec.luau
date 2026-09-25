@@ -760,6 +760,34 @@ test("PoolSize resizes the pool while the game runs and leaves parts in use alon
 	expect(restored == Config.PoolSize, `{restored} parts after PoolSize went back to {Config.PoolSize}`)
 end)
 
+test("a pool of MaxDrops + MaxMarks parts never runs out with both limits full", function()
+	local expanded = 0
+	const connection = BloodFX.debugger:Connect(function(event)
+		if event.kind == "PoolExpanded" then expanded += 1 end
+	end)
+
+	BloodFX.set("MaxDrops", 4)
+	BloodFX.set("MaxMarks", 4)
+	BloodFX.set("PoolSize", 8)
+	settle(8)
+
+	for index = 1, 4 do BloodFX.mark(Vector3.new(index * 10, HEIGHT, 90), UP, 0.3) end
+	BloodFX.spray(ABOVE, DOWN, "Hit", 6)
+	for index = 5, 6 do BloodFX.mark(Vector3.new(index * 10, HEIGHT, 90), UP, 0.3) end
+	const stats = BloodFX.stats()
+	task.wait()
+
+	connection:Disconnect()
+	BloodFX.set("MaxDrops", Config.MaxDrops)
+	BloodFX.set("MaxMarks", Config.MaxMarks)
+	BloodFX.set("PoolSize", Config.PoolSize)
+	BloodFX.clear()
+	settle(Config.PoolSize)
+
+	expect(stats.drops == 4 and stats.marks == 4, `{stats.drops} drops and {stats.marks} marks at limits of 4`)
+	expect(expanded == 0 and stats.parts == 8, `a pool of 8 made {expanded} parts on the spot and holds {stats.parts}`)
+end)
+
 test("the debugger reports a pool that runs out and limits that are hit", function()
 	const heard: { [string]: BloodFX.DebugEvent } = {}
 	const connection = BloodFX.debugger:Connect(function(event) heard[event.kind] = event end)

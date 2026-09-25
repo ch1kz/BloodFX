@@ -107,6 +107,7 @@ end
 
 function Marks:create(position: Vector3, normal: Vector3, velocity: Vector3, radius: number, surface: BasePart?)
 	const settings = self.settings
+	if settings.MaxMarks < 1 then return end
 
 	-- The velocity without its part into the surface is the way the drop skids. Head-on there is no
 	-- skid, so any tangent will do: the normal crossed with a random direction.
@@ -119,6 +120,10 @@ function Marks:create(position: Vector3, normal: Vector3, velocity: Vector3, rad
 	const elongation = 1 + (math.min(1 / sine, MAX_ELONGATION) - 1) * settings.SlantStretch
 
 	const shape = random:NextNumber(settings.MarkStretch.Min, settings.MarkStretch.Max)
+
+	-- Room is made before the part is taken, as in Drops:launch.
+	self:trim(1)
+
 	const part = self.pool:take()
 
 	-- A mark is flat along X and long along Z. With X on the normal and Y across the skid,
@@ -149,8 +154,6 @@ function Marks:create(position: Vector3, normal: Vector3, velocity: Vector3, rad
 	else
 		self.grid:insert(mark)
 	end
-
-	self:trim()
 end
 
 function Marks:attach(mark: Mark, surface: BasePart)
@@ -286,11 +289,11 @@ function Marks:remove(index: number)
 	self.pool:give(mark.part)
 end
 
-function Marks:trim()
+function Marks:trim(room: number?)
 	const list = self.list
 	const limit = self.settings.MaxMarks
 
-	while #list > limit do
+	while #list + (room or 0) > limit do
 		local oldest = 1
 
 		for index, mark in list do

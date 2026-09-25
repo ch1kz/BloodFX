@@ -104,11 +104,11 @@ function Pool:expand(): BasePart
 end
 
 function Pool:give(part: BasePart)
-	if self.outdated[part] or self:spare() >= self.size then
+	if self:spare() >= self.size then
 		self:discard(part)
 	else
 		part.CFrame = STORAGE
-		table.insert(self.idle, part)
+		table.insert(if self.outdated[part] then self.retired else self.idle, part)
 	end
 end
 

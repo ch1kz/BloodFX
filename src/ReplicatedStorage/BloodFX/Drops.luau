@@ -70,6 +70,12 @@ end
 end
 
 function Drops:launch(position: Vector3, velocity: Vector3, radius: number)
+	if self.settings.MaxDrops < 1 then return end
+
+	-- Room is made before the part is taken, so parts in use never go past MaxDrops + MaxMarks
+	-- and a pool of that size never has to grow.
+	self:trim(1)
+
 	const part = self.pool:take()
 	part.Size = Vector3.one * radius * 2
 	part.CFrame = CFrame.new(position)
@@ -81,8 +87,6 @@ function Drops:launch(position: Vector3, velocity: Vector3, radius: number)
 		radius = radius,
 		age = 0,
 	})
-
-	self:trim()
 end
 
 function Drops:land(drop: Drop, hit: RaycastResult)
@@ -103,11 +107,11 @@ function Drops:remove(index: number)
 	self.pool:give(drop.part)
 end
 
-function Drops:trim()
+function Drops:trim(room: number?)
 	const list = self.list
 	const limit = self.settings.MaxDrops
 
-	while #list > limit do
+	while #list + (room or 0) > limit do
 		self.debugger:fire({ kind = "DropLimit", age = list[1].age, limit = limit })
 		self:remove(1)
 	end

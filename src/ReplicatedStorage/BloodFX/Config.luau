@@ -23,7 +23,8 @@ return table.freeze({
 	-- frame. Default: true.
 	ProfilerLabels = true,
 
-	-- Spare parts made at start and kept for reuse. Changed while the game runs, the pool builds or
+	-- Spare parts made at start and kept for reuse. MaxDrops plus MaxMarks, as by default, is enough
+	-- for the pool never to make one on the spot. Changed while the game runs, the pool builds or
 	-- removes parts over the next frames, a millisecond's work at a time, so even a big change causes
 	-- no hitch. Default: 1320, 660 on phones.
 	PoolSize = if isPhone then 660 else 1320,
