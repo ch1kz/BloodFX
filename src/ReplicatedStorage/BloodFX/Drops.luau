@@ -46,7 +46,11 @@ end
 	const slowest, fastest = span(spray.speed)
 	const smallest, largest = span(spray.radius)
 
-	for _ = 1, random:NextInteger(fewest, most) do
+	-- Adding a random fraction before rounding down rounds up with a chance equal to the fraction,
+	-- so the multiplied count is right on average: 3.5 drops come out as 3 or 4, half the time each.
+	const count = math.floor(random:NextInteger(fewest, most) * self.settings.DropMultiplier + random:NextNumber())
+
+	for _ = 1, count do
 		-- Spin around the aim, then tilt off it by an angle drawn evenly between 0 and the spread.
 		-- Even in angle is not even in area, so drops crowd the aim and thin out towards the rim.
 		const turn = CFrame.Angles(0, 0, random:NextNumber(0, 2 * math.pi))

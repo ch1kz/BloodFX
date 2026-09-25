@@ -145,12 +145,15 @@ BloodFX.emitter(part, "Drip", {
 
 ### Drops in flight
 
-`spray` throws `count` drops from a point. Each leaves in a random direction inside a cone of `spread`
-degrees around `direction`: turned at random around the aim, then tilted off it by an angle drawn
-evenly between 0 and `spread`. Even in angle is not even in area, so drops crowd the middle of the
-cone and thin out towards its rim, the way a real splash does. Speeds are drawn from `speed` and
-multiplied by the emitter's `strength`; sizes are drawn from `radius`, leaning towards the small end,
-so most drops are fine and the odd one is big.
+`spray` throws `count` drops from a point, times `DropMultiplier`: at 0.5 a spray of 10 throws 5. A
+count that does not come out whole is rounded up or down at random, so 7 drops at 0.5 are 3 or 4 and
+3.5 on average, and an emitter keeps its average flow.
+
+Each drop leaves in a random direction inside a cone of `spread` degrees around `direction`: turned
+at random around the aim, then tilted off it by an angle drawn evenly between 0 and `spread`. Even in
+angle is not even in area, so drops crowd the middle of the cone and thin out towards its rim, the way
+a real splash does. Speeds are drawn from `speed` and multiplied by the emitter's `strength`; sizes
+are drawn from `radius`, leaning towards the small end, so most drops are fine and the odd one is big.
 
 Every frame a drop falls by `Gravity` and slows by `Drag`: it keeps e^-Drag of its speed each second,
 worked out exactly for the length of the frame, so the flight does not change with the frame rate.
@@ -332,9 +335,10 @@ at about 55 µs each, so a part with 100 of them costs about 5 ms once.
 All settings, with their defaults and what they do, are described in
 [`src/ReplicatedStorage/BloodFX/Config.luau`](src/ReplicatedStorage/BloodFX/Config.luau).
 
-A few defaults are lower on phones: `PoolSize` 600, `MaxDrops` 160, `MaxMarks` 500 and
-`MarkLifetime` 15. A phone is a device with a touch screen and no keyboard, so tablets with a
-keyboard and touch-screen laptops keep the full values. The check is `isPhone` at the top of
+A few defaults are lower on phones: `PoolSize` 600, `MaxDrops` 160, `MaxMarks` 500, `MarkLifetime` 15
+and `DropMultiplier` 0.5, so every spray throws half as many drops as the script asks for. A phone is
+a device with a touch screen and no keyboard, so tablets with a keyboard and touch-screen laptops keep
+the full values. The check is `isPhone` at the top of
 `Config.luau`; use it for any other setting that should differ on phones.
 
 With `DynamicSettings` on, the live values are mirrored as attributes on `workspace.BloodFX.Config`.
@@ -379,7 +383,8 @@ without touching the scripts that listen to it.
 
 ## Performance
 
-- Drops cost the most: each casts one ray a frame while it flies. `MaxDrops` is the lever.
+- Drops cost the most: each casts one ray a frame while it flies. `MaxDrops` and `DropMultiplier`
+  are the levers.
 - Phones get half the drops, marks and spare parts, and marks that fade sooner; see [Config](#config).
 - Settled marks are anchored parts that nothing touches, so a floor covered in blood costs little
   more than the parts themselves; each frame BloodFX only ages them and checks the ones overhead

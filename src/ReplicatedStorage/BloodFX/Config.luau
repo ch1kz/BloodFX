@@ -38,6 +38,11 @@ return table.freeze({
 	-- Most drops in flight at once; the oldest makes room for a new one. Default: 320, 160 on phones.
 	MaxDrops = if isPhone then 160 else 320,
 
+	-- Multiplies the number of drops every spray and emitter throws: at 0.5 a spray of 10 throws 5.
+	-- A count that does not come out whole is rounded up or down at random, so 7 drops at 0.5 are
+	-- 3 or 4 and 3.5 on average. Default: 1, 0.5 on phones.
+	DropMultiplier = if isPhone then 0.5 else 1,
+
 	-- Most marks at once; the one left alone longest makes room for a new one. Default: 1000, 500 on
 	-- phones.
 	MaxMarks = if isPhone then 500 else 1000,

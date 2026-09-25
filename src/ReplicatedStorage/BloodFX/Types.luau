@@ -6,6 +6,7 @@ export type Config = {
 	Color: Color3,
 	Material: Enum.Material,
 	MaxDrops: number,
+	DropMultiplier: number,
 	MaxMarks: number,
 	Gravity: number,
 	Drag: number,

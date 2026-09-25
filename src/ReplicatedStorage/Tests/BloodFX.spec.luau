@@ -148,6 +148,37 @@ test("a number after the preset is the drop count, and ranges take plain numbers
 	expect(emitted == 3, `an emitter with a count of 3 threw {emitted}`)
 end)
 
+test("DropMultiplier scales every spray and keeps the average right", function()
+	BloodFX.set("DropMultiplier", 0.5)
+
+	BloodFX.spray(ABOVE, DOWN, "Hit", 10)
+	const halved = BloodFX.stats().drops
+	BloodFX.clear()
+
+	local total, fewest, most = 0, math.huge, 0
+
+	for _ = 1, 200 do
+		BloodFX.spray(ABOVE, DOWN, "Hit", 7)
+		const thrown = BloodFX.stats().drops
+		BloodFX.clear()
+
+		total += thrown
+		fewest = math.min(fewest, thrown)
+		most = math.max(most, thrown)
+	end
+
+	const emitter = BloodFX.emitter(CFrame.new(0, HEIGHT + 50, 0), "Drip", { rate = 0, count = 4 })
+	emitter:emit()
+	const emitted = BloodFX.stats().drops
+	emitter:destroy()
+
+	BloodFX.set("DropMultiplier", 1)
+	expect(halved == 5, `a spray of 10 threw {halved} drops at 0.5`)
+	expect(fewest == 3 and most == 4, `a spray of 7 at 0.5 threw between {fewest} and {most} drops`)
+	expect(math.abs(total / 200 - 3.5) < 0.2, `a spray of 7 at 0.5 threw {total / 200} drops on average`)
+	expect(emitted == 2, `an emitter with a count of 4 threw {emitted} at 0.5`)
+end)
+
 test("drops land and leave marks", function()
 	BloodFX.spray(ABOVE, DOWN, "Hit")
 	expect(BloodFX.stats().drops > 0, "the spray threw nothing")
@@ -782,6 +813,8 @@ return function(): string
 	const report = {}
 	local failed = 0
 
+	BloodFX.set("DropMultiplier", 1)
+
 	for _, case in cases do
 		BloodFX.unfreeze()
 		BloodFX.clear()
@@ -792,6 +825,7 @@ return function(): string
 		table.insert(report, if ok then `PASS  {case.name}` else `FAIL  {case.name}: {message}`)
 	end
 
+	BloodFX.set("DropMultiplier", Config.DropMultiplier)
 	floor:Destroy()
 	BloodFX.clear()
 
