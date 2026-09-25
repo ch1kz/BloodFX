@@ -14,6 +14,7 @@ const TARGET_TRAVEL = 7
 const TARGET_PERIOD = 9
 const MONITOR_INTERVAL = 0.25
 const CLICK_SPRAY = { count = NumberRange.new(12, 20) }
+const FREEZE_KEY = Enum.KeyCode.F
 
 const player = Players.LocalPlayer
 const sources = workspace:WaitForChild("Sources")
@@ -84,7 +85,14 @@ sources.ChildAdded:Connect(attach)
 for _, part in sources:GetChildren() do attach(part) end
 
 UserInputService.InputBegan:Connect(function(input: InputObject, processed: boolean)
-	if processed or input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
+	if processed then return end
+
+	if input.KeyCode == FREEZE_KEY then
+		if BloodFX.isFrozen() then BloodFX.unfreeze() else BloodFX.freeze() end
+		return
+	end
+
+	if input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
 
 	const ray = workspace.CurrentCamera:ScreenPointToRay(input.Position.X, input.Position.Y)
 	clickParams.FilterDescendantsInstances = { player.Character }
