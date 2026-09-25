@@ -2,6 +2,7 @@ export type Config = {
 	DynamicSettings: boolean,
 	Frozen: boolean,
 	Debug: boolean,
+	ProfilerLabels: boolean,
 	PoolSize: number,
 	Color: Color3,
 	Material: Enum.Material,
