@@ -1,7 +1,7 @@
 [package]
 name = "ch1kz/bloodfx"
 description = "Part-based blood: drops that fly and raycast, marks that merge into pools, pools that drip"
-version = "0.1.1"
+version = "0.1.2"
 license = "MIT"
 authors = ["ch1kz"]
 realm = "shared"
