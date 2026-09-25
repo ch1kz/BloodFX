@@ -39,7 +39,7 @@ src/ReplicatedStorage/BloodFX           the module
     Emitter       a continuous source on a part, attachment or CFrame
     Debugger      reports a pool that runs out and limits that are hit
     Presets       every preset in one table
-src/ReplicatedStorage/Tests             BloodFX.spec, the tests; BloodFX.perf, benchmark and profiler
+src/ReplicatedStorage/Tests             BloodFX.spec, the tests; BloodFX.perf, benchmarks and profiler
 src/StarterPlayer/StarterPlayerScripts  BloodDemo, the demo for the test place; BloodDebug, a
                                         debugger listener that warns
 ```
@@ -340,5 +340,5 @@ without touching the scripts that listen to it.
 - Parts come from the pool, so a spray reuses parts instead of creating them.
 - The maths-heavy functions are marked `@native`. Roblox compiles native code only for server
   scripts, so on the client they run as ordinary Luau.
-- `BloodFX.stats()` gives the live counts, and `Tests/BloodFX.perf` has a benchmark and an in-game
-  profiler.
+- `BloodFX.stats()` gives the live counts, and `Tests/BloodFX.perf` has benchmarks, one of them for
+  what welding marks to parts costs, and an in-game profiler.
