@@ -25,8 +25,8 @@ return table.freeze({
 
 	-- Spare parts made at start and kept for reuse. Changed while the game runs, the pool builds or
 	-- removes parts over the next frames, a millisecond's work at a time, so even a big change causes
-	-- no hitch. Default: 1200, 600 on phones.
-	PoolSize = if isPhone then 600 else 1200,
+	-- no hitch. Default: 1320, 660 on phones.
+	PoolSize = if isPhone then 660 else 1320,
 
 	-- Colour of drops and marks. Default: 124, 10, 10.
 	Color = Color3.fromRGB(124, 10, 10),

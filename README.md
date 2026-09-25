@@ -342,7 +342,7 @@ at about 55 µs each, so a part with 100 of them costs about 5 ms once.
 All settings, with their defaults and what they do, are described in
 [`src/ReplicatedStorage/BloodFX/Config.luau`](src/ReplicatedStorage/BloodFX/Config.luau).
 
-A few defaults are lower on phones: `PoolSize` 600, `MaxDrops` 160, `MaxMarks` 500, `MarkLifetime` 15
+A few defaults are lower on phones: `PoolSize` 660, `MaxDrops` 160, `MaxMarks` 500, `MarkLifetime` 15
 and `DropMultiplier` 0.5, so every spray throws half as many drops as the script asks for. A phone is
 a device with a touch screen and no keyboard, so tablets with a keyboard and touch-screen laptops keep
 the full values. The check is `isPhone` at the top of
