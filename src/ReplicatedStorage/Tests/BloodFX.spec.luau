@@ -406,6 +406,33 @@ test("a part leaving the world takes its own welded marks and no others", functi
 	expect(after == 3, `{after} marks left instead of the 3 on the floor`)
 end)
 
+test("a welded pool still takes drops in after its part moved and turned", function()
+	const plate = block(Vector3.new(10, 0.2, 10), Vector3.new(-60, HEIGHT + 2, 60))
+	plate:AddTag(Config.AttachTag)
+
+	const oneDrop = { count = 1, speed = 20, spread = 0, radius = 0.15 }
+	BloodFX.spray(Vector3.new(-60, HEIGHT + 4, 60), DOWN, oneDrop)
+	task.wait(0.5)
+
+	const pool = raisedMarks()[1]
+	plate.CFrame = CFrame.new(-50, HEIGHT + 6, 70) * CFrame.Angles(0, math.rad(90), 0)
+	BloodFX.set("MergeReach", 1.5)
+	task.wait()
+
+	const before = if pool then pool.Size.Y else 0
+	if pool then BloodFX.spray(pool.Position + UP * 2, DOWN, oneDrop) end
+	task.wait(0.5)
+
+	const after = if pool then pool.Size.Y else 0
+	const count = BloodFX.stats().marks
+	BloodFX.set("MergeReach", Config.MergeReach)
+	plate:Destroy()
+
+	expect(pool, "the first drop left no mark on the plate")
+	expect(count == 1, `{count} marks instead of one pool after the second drop`)
+	expect(after > before, `the pool stayed {after} across after taking in a drop`)
+end)
+
 test("player characters carry the character tag", function()
 	const character = Players:GetPlayers()[1].Character
 

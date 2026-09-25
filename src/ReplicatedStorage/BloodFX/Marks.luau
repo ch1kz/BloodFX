@@ -7,7 +7,8 @@ type Bond = {
 }
 
 type Carrier = {
-	marks: { Mark },
+	grid: typeof(Grid.new(1)),
+	count: number,
 	watch: RBXScriptConnection,
 }
 
@@ -15,6 +16,7 @@ type Mark = {
 	part: BasePart,
 	position: Vector3,
 	normal: Vector3,
+	up: number,
 	radius: number,
 	shape: number,
 	stretch: number,
@@ -30,7 +32,6 @@ const PLANE_TOLERANCE = 0.25
 const RIM_POINTS = 8
 const MAX_ELONGATION = 3
 const DRIP_RADIUS = NumberRange.new(0.1, 0.15)
-const NO_MARKS: { Mark } = table.freeze({})
 
 const RIM: { Vector3 } = table.create(RIM_POINTS)
 for index = 1, RIM_POINTS do
@@ -48,6 +49,18 @@ const function poolingOn(normal: Vector3, wall: number, ceiling: number): number
 	if up >= 0 then return wall + (1 - wall) * up end
 
 	return wall + (wall - ceiling) * up
+end
+
+const function joining(position: Vector3, normal: Vector3, reach: number): (Mark) -> boolean
+	return @native function(mark: Mark): boolean
+		const gap = position - mark.position
+		const aligned = mark.normal:Dot(normal) >= MERGE_ALIGNMENT
+
+		-- gap projected on the normal is how far the new drop sits off the mark's plane.
+		const coplanar = aligned and math.abs(gap:Dot(mark.normal)) <= PLANE_TOLERANCE
+
+		return coplanar and gap.Magnitude <= mark.radius * reach
+	end
 end
 
 local Marks = {}
@@ -71,21 +84,7 @@ end
 function Marks:add(position: Vector3, normal: Vector3, velocity: Vector3, radius: number, surface: BasePart?)
 	const settings = self.settings
 	const pooling = poolingOn(normal, settings.WallPooling, settings.CeilingPooling)
-	const reach = settings.MergeReach * pooling
-
-	const joins = @native function(mark: Mark): boolean
-		const gap = position - mark.position
-		const aligned = mark.normal:Dot(normal) >= MERGE_ALIGNMENT
-
-		-- gap projected on the normal is how far the new drop sits off the mark's plane.
-		const coplanar = aligned and math.abs(gap:Dot(mark.normal)) <= PLANE_TOLERANCE
-
-		return coplanar and gap.Magnitude <= mark.radius * reach
-	end
-
-	const target = if pooling == 0 then nil
-		elseif surface then self:findOn(surface, joins)
-		else self.grid:find(position, joins)
+	const target = if pooling > 0 then self:find(position, normal, settings.MergeReach * pooling, surface) else nil
 
 	if target then
 		self:grow(target, radius, pooling)
@@ -94,17 +93,16 @@ function Marks:add(position: Vector3, normal: Vector3, velocity: Vector3, radius
 	end
 end
 
-function Marks:findOn(surface: BasePart, joins: (Mark) -> boolean): Mark?
+function Marks:find(position: Vector3, normal: Vector3, reach: number, surface: BasePart?): Mark?
+	if not surface then return self.grid:find(position, joining(position, normal, reach)) end
+
 	const carrier = self.carriers[surface]
+	if not carrier then return nil end
 
-	for _, mark in if carrier then carrier.marks else NO_MARKS do
-		mark.position = mark.part.Position
-		mark.normal = mark.part.CFrame.RightVector
+	const frame = surface.CFrame
+	const spot = frame:PointToObjectSpace(position)
 
-		if joins(mark) then return mark end
-	end
-
-	return nil
+	return carrier.grid:find(spot, joining(spot, frame:VectorToObjectSpace(normal), reach))
 end
 
 function Marks:create(position: Vector3, normal: Vector3, velocity: Vector3, radius: number, surface: BasePart?)
@@ -131,6 +129,7 @@ function Marks:create(position: Vector3, normal: Vector3, velocity: Vector3, rad
 		part = part,
 		position = position,
 		normal = normal,
+		up = normal.Y,
 		radius = math.min(radius, settings.MarkMaxRadius),
 		shape = shape,
 		stretch = elongation * shape,
@@ -155,6 +154,11 @@ function Marks:create(position: Vector3, normal: Vector3, velocity: Vector3, rad
 end
 
 function Marks:attach(mark: Mark, surface: BasePart)
+	-- A welded mark keeps its position and normal in its part's own space, where they stay put
+	-- however the part moves; find brings a landing into that space before comparing.
+	const frame = surface.CFrame
+	mark.position = frame:PointToObjectSpace(mark.position)
+	mark.normal = frame:VectorToObjectSpace(mark.normal)
 	mark.part.Anchored = false
 
 	const weld = Instance.new("WeldConstraint")
@@ -163,12 +167,17 @@ function Marks:attach(mark: Mark, surface: BasePart)
 	weld.Parent = mark.part
 
 	mark.bond = { surface = surface, weld = weld }
-	table.insert((self.carriers[surface] or self:carry(surface)).marks, mark)
+
+	const carrier = self.carriers[surface] or self:carry(surface)
+	carrier.grid:insert(mark)
+	carrier.count += 1
 end
 
 function Marks:carry(surface: BasePart): Carrier
+	const settings = self.settings
 	const carrier: Carrier = {
-		marks = {},
+		grid = Grid.new(settings.MarkMaxRadius * settings.MergeReach),
+		count = 0,
 		watch = surface.AncestryChanged:Connect(function()
 			if not surface:IsDescendantOf(workspace) then self:release(surface) end
 		end),
@@ -181,11 +190,10 @@ end
 
 function Marks:detach(mark: Mark, bond: Bond)
 	const carrier = self.carriers[bond.surface]
-	const marks = carrier.marks
+	carrier.grid:remove(mark)
+	carrier.count -= 1
 
-	table.remove(marks, table.find(marks, mark))
-
-	if #marks == 0 then
+	if carrier.count == 0 then
 		carrier.watch:Disconnect()
 		self.carriers[bond.surface] = nil
 	end
@@ -244,7 +252,7 @@ end
 
 @native function Marks:supports(mark: Mark, radius: number, stretch: number): boolean
 	const frame = mark.part.CFrame
-	const lift = mark.normal * PLANE_TOLERANCE
+	const lift = frame.RightVector * PLANE_TOLERANCE
 
 	-- Each side is a unit direction across the mark; scaling it by the two radii lands it on the
 	-- oval's rim. A short ray through the plane there tells whether anything holds that edge up.
@@ -317,13 +325,24 @@ end
 
 function Marks:regrid()
 	const settings = self.settings
+	const cell = settings.MarkMaxRadius * settings.MergeReach
 	const loose = {}
+	const welded: { [BasePart]: { Mark } } = {}
 
 	for _, mark in self.list do
-		if not mark.bond then table.insert(loose, mark) end
+		const bond = mark.bond
+
+		if not bond then
+			table.insert(loose, mark)
+		elseif welded[bond.surface] then
+			table.insert(welded[bond.surface], mark)
+		else
+			welded[bond.surface] = { mark }
+		end
 	end
 
-	self.grid:rebuild(settings.MarkMaxRadius * settings.MergeReach, loose)
+	self.grid:rebuild(cell, loose)
+	for surface, carrier in self.carriers do carrier.grid:rebuild(cell, welded[surface]) end
 end
 
 function Marks:fade()
@@ -338,9 +357,9 @@ end
 @native function Marks:step(dt: number, drops)
 	const settings = self.settings
 
-	-- normal.Y is the cosine of a surface's tilt. Pools drip where it falls below the cosine of
-	-- CeilingDripAngle, and the chance climbs linearly from nothing there to the full rate at -1,
-	-- a flat ceiling.
+	-- up, the world normal's Y as the mark was made, is the cosine of its surface's tilt. Pools drip
+	-- where it falls below the cosine of CeilingDripAngle, and the chance climbs linearly from
+	-- nothing there to the full rate at -1, a flat ceiling.
 	const edge = math.cos(math.rad(settings.CeilingDripAngle))
 	const chance = if settings.CeilingDrip then settings.CeilingDripRate * dt / math.max(edge + 1, 1e-3) else 0
 
@@ -359,7 +378,7 @@ end
 			self:remove(index)
 		elseif faded > 0 then
 			mark.part.Transparency = faded
-		elseif mark.normal.Y < edge and random:NextNumber() < (edge - mark.normal.Y) * chance then
+		elseif mark.up < edge and random:NextNumber() < (edge - mark.up) * chance then
 			self:drip(mark, drops)
 		end
 	end

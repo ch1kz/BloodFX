@@ -364,7 +364,6 @@ function Performance.attachment(): string
 	const pool = Pool.new(world, 5000, settings.Color, settings.Material, debugger)
 	const marks = Marks.new(pool, settings, params, debugger)
 	const drops = Drops.new(pool, marks, settings, params, debugger)
-	const never = function() return false end
 
 	const function lined(index: number, z: number): Vector3
 		return Vector3.new(index % 25 * 4 - 50, HEIGHT, index // 25 * 4 + z)
@@ -393,6 +392,11 @@ function Performance.attachment(): string
 		return Vector3.new(index % 50 * 3.5 - 87.5, HEIGHT, index // 50 * 3.5 - 87.5)
 	end
 
+	const function between(count: number): Vector3
+		return spread(count // 2) + Vector3.new(1.75, 0, 1.75)
+	end
+
+	const reach = settings.MergeReach
 	local placed = 0
 
 	for _, count in { 250, 1000, 2000 } do
@@ -411,18 +415,20 @@ function Performance.attachment(): string
 
 		placed = count
 
-		const middle = spread(count // 2)
-		measure(timings, `landing search among {count} marks on one part, anchored`, 200, function() marks.grid:find(middle, never) end)
-		measure(timings, `landing search among {count} marks on one part, welded`, 200, function() marks:findOn(slab, never) end)
+		const spot = between(count)
+		measure(timings, `landing search among {count} marks on one part, anchored`, 200, function() marks:find(spot, UP, reach) end)
+		measure(timings, `landing search among {count} marks on one part, welded`, 200, function()
+			marks:find(spot + across, UP, reach, slab)
+		end)
 	end
 
 	measure(timings, `landing search among {placed} marks on one part, welded, one more welded before each`, 20, function()
-		marks:findOn(slab, never)
+		marks:find(between(placed) + across, UP, reach, slab)
 	end, function(index)
 		marks:create(spread(index) + across, UP, -UP, 0.3, slab)
 	end)
 
-	const welded = #marks.carriers[slab].marks
+	const welded = marks.carriers[slab].count
 	destroyTimed(timings, slab, `destroying a part with {welded} welded marks`)
 
 	table.insert(notes, `{#marks.list} of {#marks.list + welded} marks were left after the part holding {welded} of them was destroyed.`)
