@@ -30,9 +30,9 @@ return table.freeze({
 	Material = Enum.Material.SmoothPlastic,
 
 	-- Mesh asset that drops and marks are drawn with instead of the engine's sphere. The default is a
-	-- low-poly sphere of 96 triangles, where the engine's has 378 and on a weak graphics chip can take
-	-- most of the frame. The engine's sphere stands in until the mesh has loaded, and for good if it
-	-- cannot load; "" keeps it. Read once at start. Default: "rbxassetid://123857244542375".
+	-- low-poly sphere of 96 triangles, where the engine's has 378. The engine's sphere stands in until
+	-- the mesh has loaded, and for good if it cannot load; "" keeps it. Read once at start.
+	-- Default: "rbxassetid://123857244542375".
 	Mesh = "rbxassetid://123857244542375",
 
 	-- Downward pull on drops, in studs per second squared. Default: 60.

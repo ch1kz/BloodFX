@@ -392,10 +392,8 @@ without touching the scripts that listen to it.
 
 - Drops cost the most: each casts one ray a frame while it flies. `MaxDrops` and `DropMultiplier`
   are the levers.
-- On a weak graphics chip, drawing blood can cost more than running it. The engine's sphere has 378
-  triangles, nearly all of them tiny on a mark, and on a laptop with integrated graphics a floor of
-  about 900 marks took 16 of the 22 ms of every frame. The default `Mesh` has 96, and blood draws
-  4.5 times fewer triangles with it.
+- Every drop and mark is drawn with the 96-triangle `Mesh` rather than the engine's sphere of 378,
+  so blood sends the graphics chip 2.5 to 4.5 times fewer triangles.
 - Phones get half the drops, marks and spare parts, and marks that fade sooner; see [Config](#config).
 - Settled marks are anchored parts that nothing touches, so a floor covered in blood costs little
   more than the parts themselves; each frame BloodFX only ages them and checks the ones overhead
