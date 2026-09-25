@@ -22,7 +22,6 @@ export type Stats = Types.Stats
 
 const STATIC = table.freeze({
 	DynamicSettings = true,
-	PoolSize = true,
 	IgnoreTag = true,
 	AbsorbTag = true,
 	AttachTag = true,
@@ -93,6 +92,7 @@ const function accepts(key: string, value: any): boolean
 end
 
 const reactions: { [string]: () -> () } = {
+	PoolSize = function() pool:resize(settings.PoolSize) end,
 	Color = function() pool:paint(settings.Color, settings.Material) end,
 	Material = function() pool:paint(settings.Color, settings.Material) end,
 	MaxDrops = function() drops:trim() end,
@@ -171,10 +171,13 @@ function BloodFX.stats(): Stats
 		marks = #marks.list,
 		emitters = #emitters,
 		parts = pool.total,
+		spare = #pool.idle,
 	}
 end
 
 const function step(dt: number)
+	pool:step()
+
 	if settings.Frozen then return end
 
 	for _, emitter in emitters do emitter:step(dt) end

@@ -13,7 +13,9 @@ return table.freeze({
 	-- until it is switched back on. BloodFX.freeze and unfreeze flip it too. Default: false.
 	Frozen = false,
 
-	-- Spare parts made at start and kept for reuse. Default: 1200, 600 on phones.
+	-- Spare parts made at start and kept for reuse. Changed while the game runs, the pool builds or
+	-- removes parts over the next frames, a millisecond's work at a time, so even a big change causes
+	-- no hitch. Default: 1200, 600 on phones.
 	PoolSize = if isPhone then 600 else 1200,
 
 	-- Colour of drops and marks. Default: 124, 10, 10.

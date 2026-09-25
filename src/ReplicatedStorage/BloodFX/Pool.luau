@@ -1,4 +1,5 @@
 const STORAGE = CFrame.new(0, -1e4, 0)
+const RESIZE_BUDGET = 1e-3
 
 local Pool = {}
 Pool.__index = Pool
@@ -26,12 +27,12 @@ function Pool.new(parent: Instance, size: number, color: Color3, material: Enum.
 	const self = setmetatable({
 		container = container,
 		template = template,
-		size = size,
+		size = math.floor(size),
 		total = 0,
 		idle = {} :: { BasePart },
 	}, Pool)
 
-	for _ = 1, size do
+	for _ = 1, self.size do
 		table.insert(self.idle, self:create())
 	end
 
@@ -60,6 +61,26 @@ function Pool:give(part: BasePart)
 	else
 		part:Destroy()
 		self.total -= 1
+	end
+end
+
+function Pool:resize(size: number)
+	self.size = math.floor(size)
+end
+
+function Pool:step()
+	const idle = self.idle
+	const deadline = os.clock() + RESIZE_BUDGET
+
+	while os.clock() < deadline do
+		if #idle > self.size then
+			table.remove(idle):Destroy()
+			self.total -= 1
+		elseif self.total < self.size then
+			table.insert(idle, self:create())
+		else
+			return
+		end
 	end
 end
 

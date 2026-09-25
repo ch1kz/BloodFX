@@ -58,6 +58,13 @@ const function markNear(position: Vector3): BasePart?
 	return nil
 end
 
+const function settle(parts: number): number
+	const deadline = os.clock() + 5
+	while BloodFX.stats().parts ~= parts and os.clock() < deadline do task.wait() end
+
+	return BloodFX.stats().parts
+end
+
 const function slantedMark(): BasePart?
 	BloodFX.spray(ABOVE, Vector3.new(1, -0.2, 0), {
 		count = NumberRange.new(1, 1),
@@ -401,7 +408,6 @@ end)
 test("set checks the key and the value", function()
 	expect(not pcall(BloodFX.set, "Gravity", "fast"), "a string was accepted for Gravity")
 	expect(not pcall(BloodFX.set, "Gravity", -1), "a negative Gravity was accepted")
-	expect(not pcall(BloodFX.set, "PoolSize", 10), "PoolSize changed at runtime")
 	expect(not pcall(BloodFX.set, "AttachTag", "Other"), "a tag changed at runtime")
 	expect(not pcall(BloodFX.set, "Nope", 1), "an unknown key was accepted")
 	expect(not pcall(BloodFX.set, "Material", Enum.PartType.Ball), "a PartType was accepted as a Material")
@@ -576,6 +582,27 @@ test("fade takes marks away over the fade time", function()
 	const count = BloodFX.stats().marks
 	BloodFX.set("MarkFadeTime", Config.MarkFadeTime)
 	expect(count == 0, `{count} marks survived the fade`)
+end)
+
+test("PoolSize resizes the pool while the game runs and leaves parts in use alone", function()
+	const larger = Config.PoolSize + 300
+
+	BloodFX.set("PoolSize", larger)
+	const grown = settle(larger)
+
+	for index = 1, 5 do BloodFX.mark(Vector3.new(index * 10, HEIGHT, 50), UP, 0.3) end
+	BloodFX.set("PoolSize", 0)
+	const shrunk = settle(5)
+	const spare = BloodFX.stats().spare
+	const marks = BloodFX.stats().marks
+
+	BloodFX.set("PoolSize", Config.PoolSize)
+	BloodFX.clear()
+	const restored = settle(Config.PoolSize)
+
+	expect(grown == larger, `{grown} parts after PoolSize went up to {larger}`)
+	expect(shrunk == 5 and spare == 0 and marks == 5, `{shrunk} parts, {spare} spare and {marks} marks at PoolSize 0`)
+	expect(restored == Config.PoolSize, `{restored} parts after PoolSize went back to {Config.PoolSize}`)
 end)
 
 test("clear hands every part back to the pool", function()

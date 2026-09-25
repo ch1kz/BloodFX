@@ -83,6 +83,7 @@ export type Stats = {
 	marks: number,
 	emitters: number,
 	parts: number,
+	spare: number,
 }
 
 return {}

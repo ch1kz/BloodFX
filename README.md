@@ -63,7 +63,7 @@ wound:destroy()
 | `get(key)` / `set(key, value)` | Reads or changes a setting by name. `set` needs `Config.DynamicSettings` and checks the type. |
 | `clear()` / `fade()` | Removes all blood at once, or starts every mark fading out now. |
 | `freeze()` / `unfreeze()` / `isFrozen()` | Switches blood off and back on. Freezing clears what is there and silences emitters without removing them. It is the `Frozen` setting, so the attribute on the Config shows it and can flip it too. |
-| `stats()` | `drops`, `marks`, `emitters` and `parts` right now; `parts` counts every pooled part, in use or spare. |
+| `stats()` | `drops`, `marks`, `emitters`, `parts` and `spare` right now; `parts` counts every pooled part, in use or spare, and `spare` the ones waiting to be used. |
 
 An `Emitter` carries every field of its preset, plus `origin`, `enabled`, `strength` (a multiplier on
 the speed of each emission) and `age` in seconds, and each can be changed while it runs. `emit()`
@@ -252,6 +252,11 @@ Drops and marks draw their parts from a pool of `PoolSize` spare parts made at s
 needed, extras are made on the spot and destroyed when they come back to a full pool. No part casts
 a shadow or takes part in collisions, touches or raycasts, and all but the welded marks are anchored.
 
+`PoolSize` can change while the game runs, to make room before a big fight or give the memory back
+in a lobby. The pool then builds or destroys spare parts over the following frames, a millisecond's
+work per frame at most, so even a big change causes no hitch. Parts in use are never taken: when the
+pool shrinks below them, they are destroyed as they come back.
+
 ## Tags
 
 Three CollectionService tags change what happens when a drop reaches something. A tag works on a
@@ -283,8 +288,8 @@ keyboard and touch-screen laptops keep the full values. The check is `isPhone` a
 With `DynamicSettings` on, the live values are mirrored as attributes on `workspace.BloodFX.Config`.
 Edit them in Studio's Properties while the game runs, or call `BloodFX.set(name, value)`, and the
 change applies at once. A value of the wrong type, a negative number or an Enum of the wrong kind is
-refused: `set` raises an error and an attribute is put back. `DynamicSettings`, `PoolSize` and the
-tags are read once at start and only change in `Config.luau`.
+refused: `set` raises an error and an attribute is put back. `DynamicSettings` and the tags are read
+once at start and only change in `Config.luau`.
 
 The folder belongs to the copy of the module that made it. Blood runs on the client, so during a
 playtest look for it in the client's view. If the server requires BloodFX as well, it has a folder of
