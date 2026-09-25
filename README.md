@@ -389,11 +389,11 @@ back, say once every few seconds for each kind of event; `BloodDebug` in the dem
 `Debug` in the Config switches every report off at once, which silences the debugger in a release
 without touching the scripts that listen to it.
 
-For the time BloodFX takes, the MicroProfiler is the tool. With `ProfilerLabels` on, its work shows
-there under labels that all start with `BloodFX`: the whole frame's work as `BloodFX`, and inside it
-`BloodFX/Pool`, `BloodFX/Emitters`, `BloodFX/Drops`, `BloodFX/Landing` and `BloodFX/Marks`, with
-`BloodFX/Spray` wherever a spray is thrown. Typing `BloodFX` into the profiler's filter leaves only
-those.
+For the time BloodFX takes, the MicroProfiler is the tool. BloodFX's work shows there under labels
+that all start with `BloodFX`: the whole frame's work as `BloodFX`, and inside it `BloodFX/Pool`,
+`BloodFX/Emitters`, `BloodFX/Drops`, `BloodFX/Landing` and `BloodFX/Marks`, with `BloodFX/Spray`
+wherever a spray is thrown. Typing `BloodFX` into the profiler's filter leaves only those. The labels
+cost a few microseconds a frame, so they are always there.
 
 ## Performance
 

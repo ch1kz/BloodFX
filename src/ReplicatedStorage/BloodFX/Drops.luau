@@ -45,13 +45,12 @@ end
 	const fewest, most = span(spray.count)
 	const slowest, fastest = span(spray.speed)
 	const smallest, largest = span(spray.radius)
-	const labels = self.settings.ProfilerLabels
 
 	-- Adding a random fraction before rounding down rounds up with a chance equal to the fraction,
 	-- so the multiplied count is right on average: 3.5 drops come out as 3 or 4, half the time each.
 	const count = math.floor(random:NextInteger(fewest, most) * self.settings.DropMultiplier + random:NextNumber())
 
-	if labels then debug.profilebegin("BloodFX/Spray") end
+	debug.profilebegin("BloodFX/Spray")
 
 	for _ = 1, count do
 		-- Spin around the aim, then tilt off it by an angle drawn evenly between 0 and the spread.
@@ -66,7 +65,7 @@ end
 		self:launch(position, (aim * turn * tilt).LookVector * speed, radius)
 	end
 
-	if labels then debug.profileend() end
+	debug.profileend()
 end
 
 function Drops:launch(position: Vector3, velocity: Vector3, radius: number)
@@ -124,7 +123,6 @@ end
 
 @native function Drops:step(dt: number)
 	const settings = self.settings
-	const labels = settings.ProfilerLabels
 	const fall = Vector3.yAxis * settings.Gravity * dt
 
 	-- Exact decay of dv/dt = -Drag * v over the step, so drag does not change with the frame rate.
@@ -141,9 +139,9 @@ end
 		if hit then
 			self:remove(index)
 
-			if labels then debug.profilebegin("BloodFX/Landing") end
+			debug.profilebegin("BloodFX/Landing")
 			self:land(drop, hit)
-			if labels then debug.profileend() end
+			debug.profileend()
 		elseif drop.age > settings.DropLifetime then
 			self:remove(index)
 		else

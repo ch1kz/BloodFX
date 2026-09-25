@@ -18,11 +18,6 @@ return table.freeze({
 	-- hear about these, and switch it off here to silence every listener at once. Default: true.
 	Debug = true,
 
-	-- Labels BloodFX's work in the MicroProfiler: BloodFX, with BloodFX/Pool, Emitters, Drops, Landing,
-	-- Marks and Spray inside it, so a capture can be filtered down to it. Costs a few microseconds a
-	-- frame. Default: true.
-	ProfilerLabels = true,
-
 	-- Spare parts made at start and kept for reuse. MaxDrops plus MaxMarks, as by default, is enough
 	-- for the pool never to make one on the spot. Changed while the game runs, the pool builds or
 	-- removes parts over the next frames, a millisecond's work at a time, so even a big change causes

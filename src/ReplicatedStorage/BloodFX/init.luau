@@ -183,28 +183,27 @@ function BloodFX.stats(): Stats
 end
 
 const function step(dt: number)
-	const labels = settings.ProfilerLabels
-	if labels then debug.profilebegin("BloodFX") end
+	debug.profilebegin("BloodFX")
 
-	if labels then debug.profilebegin("BloodFX/Pool") end
+	debug.profilebegin("BloodFX/Pool")
 	pool:step()
-	if labels then debug.profileend() end
+	debug.profileend()
 
 	if not settings.Frozen then
-		if labels then debug.profilebegin("BloodFX/Emitters") end
+		debug.profilebegin("BloodFX/Emitters")
 		for _, emitter in emitters do emitter:step(dt) end
-		if labels then debug.profileend() end
+		debug.profileend()
 
-		if labels then debug.profilebegin("BloodFX/Drops") end
+		debug.profilebegin("BloodFX/Drops")
 		drops:step(dt)
-		if labels then debug.profileend() end
+		debug.profileend()
 
-		if labels then debug.profilebegin("BloodFX/Marks") end
+		debug.profilebegin("BloodFX/Marks")
 		marks:step(dt, drops)
-		if labels then debug.profileend() end
+		debug.profileend()
 	end
 
-	if labels then debug.profileend() end
+	debug.profileend()
 end
 
 -- init
