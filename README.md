@@ -12,7 +12,7 @@ With [Wally](https://wally.run), add it to the dependencies in `wally.toml` and 
 
 ```toml
 [dependencies]
-BloodFX = "ch1kz/bloodfx@0.1.0"
+BloodFX = "ch1kz/bloodfx@0.1.1"
 ```
 
 Without Wally, put the `BloodFX` module in `ReplicatedStorage`. Then require it from a `LocalScript`:
