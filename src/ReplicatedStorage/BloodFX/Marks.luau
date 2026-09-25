@@ -4,6 +4,10 @@ const Types = require(script.Parent.Types)
 type Bond = {
 	surface: BasePart,
 	weld: WeldConstraint,
+}
+
+type Carrier = {
+	marks: { Mark },
 	watch: RBXScriptConnection,
 }
 
@@ -56,7 +60,7 @@ function Marks.new(pool, settings: Types.Config, params: RaycastParams, debugger
 		params = params,
 		debugger = debugger,
 		list = {} :: { Mark },
-		attached = {} :: { [BasePart]: { Mark } },
+		carriers = {} :: { [BasePart]: Carrier },
 
 		-- A cell as wide as the farthest reach of any pool keeps every mark a drop could join
 		-- within the 27 cells around the spot where it lands.
@@ -91,7 +95,9 @@ function Marks:add(position: Vector3, normal: Vector3, velocity: Vector3, radius
 end
 
 function Marks:findOn(surface: BasePart, joins: (Mark) -> boolean): Mark?
-	for _, mark in self.attached[surface] or NO_MARKS do
+	const carrier = self.carriers[surface]
+
+	for _, mark in if carrier then carrier.marks else NO_MARKS do
 		mark.position = mark.part.Position
 		mark.normal = mark.part.CFrame.RightVector
 
@@ -156,31 +162,63 @@ function Marks:attach(mark: Mark, surface: BasePart)
 	weld.Part1 = surface
 	weld.Parent = mark.part
 
-	const watch = surface.AncestryChanged:Connect(function()
-		const index = table.find(self.list, mark)
-		if index and not surface:IsDescendantOf(workspace) then self:remove(index) end
-	end)
+	mark.bond = { surface = surface, weld = weld }
+	table.insert((self.carriers[surface] or self:carry(surface)).marks, mark)
+end
 
-	mark.bond = { surface = surface, weld = weld, watch = watch }
+function Marks:carry(surface: BasePart): Carrier
+	const carrier: Carrier = {
+		marks = {},
+		watch = surface.AncestryChanged:Connect(function()
+			if not surface:IsDescendantOf(workspace) then self:release(surface) end
+		end),
+	}
 
-	const marks = self.attached[surface]
+	self.carriers[surface] = carrier
 
-	if marks then
-		table.insert(marks, mark)
-	else
-		self.attached[surface] = { mark }
-	end
+	return carrier
 end
 
 function Marks:detach(mark: Mark, bond: Bond)
-	const marks = self.attached[bond.surface]
+	const carrier = self.carriers[bond.surface]
+	const marks = carrier.marks
 
 	table.remove(marks, table.find(marks, mark))
-	if #marks == 0 then self.attached[bond.surface] = nil end
 
-	bond.watch:Disconnect()
+	if #marks == 0 then
+		carrier.watch:Disconnect()
+		self.carriers[bond.surface] = nil
+	end
+
 	bond.weld:Destroy()
 	mark.part.Anchored = true
+end
+
+function Marks:release(surface: BasePart)
+	const carrier = self.carriers[surface]
+	if not carrier then return end
+
+	carrier.watch:Disconnect()
+	self.carriers[surface] = nil
+
+	const list = self.list
+	local kept = 0
+
+	for index = 1, #list do
+		const mark = list[index]
+		const bond = mark.bond
+
+		if bond and bond.surface == surface then
+			bond.weld:Destroy()
+			mark.part.Anchored = true
+			self.pool:give(mark.part)
+		else
+			kept += 1
+			list[kept] = mark
+		end
+	end
+
+	for index = #list, kept + 1, -1 do list[index] = nil end
 end
 
 function Marks:grow(mark: Mark, radius: number, pooling: number)

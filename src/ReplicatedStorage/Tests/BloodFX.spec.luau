@@ -389,6 +389,23 @@ test("the attach tag carries marks with their part", function()
 	expect(BloodFX.stats().marks == 0, "marks outlived the part they were stuck to")
 end)
 
+test("a part leaving the world takes its own welded marks and no others", function()
+	const plate = block(Vector3.new(10, 0.2, 10), Vector3.new(60, HEIGHT + 2, 60))
+	plate:AddTag(Config.AttachTag)
+
+	for index = 1, 3 do BloodFX.mark(Vector3.new(index * 10, HEIGHT, -30), UP, 0.3) end
+	BloodFX.spray(Vector3.new(60, HEIGHT + 4, 60), DOWN, "Hit")
+	task.wait(1)
+
+	const before = BloodFX.stats().marks
+	plate:Destroy()
+	task.wait()
+	const after = BloodFX.stats().marks
+
+	expect(before > 3, "no marks landed on the plate")
+	expect(after == 3, `{after} marks left instead of the 3 on the floor`)
+end)
+
 test("player characters carry the character tag", function()
 	const character = Players:GetPlayers()[1].Character
 

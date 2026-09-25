@@ -422,7 +422,7 @@ function Performance.attachment(): string
 		marks:create(spread(index) + across, UP, -UP, 0.3, slab)
 	end)
 
-	const welded = #marks.attached[slab]
+	const welded = #marks.carriers[slab].marks
 	destroyTimed(timings, slab, `destroying a part with {welded} welded marks`)
 
 	table.insert(notes, `{#marks.list} of {#marks.list + welded} marks were left after the part holding {welded} of them was destroyed.`)
