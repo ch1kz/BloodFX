@@ -270,10 +270,12 @@ Drops and marks draw their parts from a pool of `PoolSize` spare parts made at s
 needed, extras are made on the spot and destroyed when they come back to a full pool. No part casts
 a shadow or takes part in collisions, touches or raycasts, and all but the welded marks are anchored.
 
-Every part is drawn with the engine's sphere, or with the mesh asset in `Mesh`. The mesh loads in the
-background: until it arrives the pool hands out spheres, and then swaps its spare parts over a few
-frames and each sphere in use as it comes back. If the mesh cannot load, blood stays spheres and a
-warning says why.
+Every part is drawn with the mesh in `Mesh`, by default a public BloodFX mesh: a low-poly sphere of
+96 triangles against the 378 of the engine's own. Flattened into a mark it looks the same, an oval
+of 24 sides. The mesh loads in the background: until it arrives the pool hands out the engine's
+spheres, and then swaps its spare parts over a few frames and each sphere in use as it comes back.
+If the mesh cannot load, blood stays spheres and a warning says why; `Mesh = ""` keeps them from
+the start.
 
 `PoolSize` can change while the game runs, to make room before a big fight or give the memory back
 in a lobby. The pool then builds or destroys spare parts over the following frames, a millisecond's
@@ -392,7 +394,8 @@ without touching the scripts that listen to it.
   are the levers.
 - On a weak graphics chip, drawing blood can cost more than running it. The engine's sphere has 378
   triangles, nearly all of them tiny on a mark, and on a laptop with integrated graphics a floor of
-  about 900 marks took 16 of the 22 ms of every frame. A mesh with fewer triangles in `Mesh` cuts that.
+  about 900 marks took 16 of the 22 ms of every frame. The default `Mesh` has 96, and blood draws
+  4.5 times fewer triangles with it.
 - Phones get half the drops, marks and spare parts, and marks that fade sooner; see [Config](#config).
 - Settled marks are anchored parts that nothing touches, so a floor covered in blood costs little
   more than the parts themselves; each frame BloodFX only ages them and checks the ones overhead
