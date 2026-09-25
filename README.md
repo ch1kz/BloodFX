@@ -8,12 +8,22 @@ Run it on the client: it is a local effect, and parts made on the server replica
 
 ## Getting started
 
-Put the `BloodFX` module in `ReplicatedStorage` and require it from a `LocalScript`:
+With [Wally](https://wally.run), add it to the dependencies in `wally.toml` and run `wally install`:
+
+```toml
+[dependencies]
+BloodFX = "ch1kz/bloodfx@0.1.0"
+```
+
+Without Wally, put the `BloodFX` module in `ReplicatedStorage`. Then require it from a `LocalScript`:
 
 ```lua
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local BloodFX = require(ReplicatedStorage:WaitForChild("BloodFX"))
 ```
+
+A module installed with Wally sits in the `Packages` folder instead, so the path there is
+`ReplicatedStorage.Packages.BloodFX`.
 
 Then call it wherever blood should appear, for example where a raycast hit something:
 
@@ -40,6 +50,8 @@ src/ReplicatedStorage/BloodFX           the module
     Presets       every preset in one table
 src/ReplicatedStorage/Tests             BloodFX.spec, the tests; BloodFX.perf, benchmark and profiler
 src/StarterPlayer/StarterPlayerScripts  BloodDemo, the demo for the test place
+default.project.json                    the module alone, as Wally ships it
+dev.project.json                        the test place: rojo serve dev.project.json
 ```
 
 ## API
