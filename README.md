@@ -275,6 +275,11 @@ of them on every player's character as it spawns.
 All settings, with their defaults and what they do, are described in
 [`src/ReplicatedStorage/BloodFX/Config.luau`](src/ReplicatedStorage/BloodFX/Config.luau).
 
+A few defaults are lower on phones: `PoolSize` 600, `MaxDrops` 160, `MaxMarks` 500 and
+`MarkLifetime` 15. A phone is a device with a touch screen and no keyboard, so tablets with a
+keyboard and touch-screen laptops keep the full values. The check is `isPhone` at the top of
+`Config.luau`; use it for any other setting that should differ on phones.
+
 With `DynamicSettings` on, the live values are mirrored as attributes on `workspace.BloodFX.Config`.
 Edit them in Studio's Properties while the game runs, or call `BloodFX.set(name, value)`, and the
 change applies at once. A value of the wrong type, a negative number or an Enum of the wrong kind is
@@ -288,6 +293,7 @@ its own, and editing that one from the client changes nothing.
 ## Performance
 
 - Drops cost the most: each casts one ray a frame while it flies. `MaxDrops` is the lever.
+- Phones get half the drops, marks and spare parts, and marks that fade sooner; see [Config](#config).
 - Settled marks are anchored parts that nothing touches, so a floor covered in blood costs little
   more than the parts themselves; each frame BloodFX only ages them and checks the ones overhead
   for drips.

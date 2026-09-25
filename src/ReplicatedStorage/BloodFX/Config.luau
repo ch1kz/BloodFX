@@ -1,4 +1,8 @@
+const UserInputService = game:GetService("UserInputService")
+
 const Types = require(script.Parent.Types)
+
+const isPhone = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
 
 return table.freeze({
 	-- Lets the settings below change while the game runs, through the attributes of
@@ -9,8 +13,8 @@ return table.freeze({
 	-- until it is switched back on. BloodFX.freeze and unfreeze flip it too. Default: false.
 	Frozen = false,
 
-	-- Spare parts made at start and kept for reuse. Default: 1200.
-	PoolSize = 1200,
+	-- Spare parts made at start and kept for reuse. Default: 1200, 600 on phones.
+	PoolSize = if isPhone then 600 else 1200,
 
 	-- Colour of drops and marks. Default: 124, 10, 10.
 	Color = Color3.fromRGB(124, 10, 10),
@@ -18,23 +22,25 @@ return table.freeze({
 	-- Material of drops and marks. Default: SmoothPlastic.
 	Material = Enum.Material.SmoothPlastic,
 
-	-- Most drops in flight at once; the oldest makes room for a new one. Default: 320.
-	MaxDrops = 320,
-
-	-- Most marks at once; the one left alone longest makes room for a new one. Default: 1000.
-	MaxMarks = 1000,
-
 	-- Downward pull on drops, in studs per second squared. Default: 60.
 	Gravity = 60,
 
 	-- Air resistance: every second a drop keeps e^-Drag of its speed. Default: 0.35.
 	Drag = 0.35,
 
+	-- Most drops in flight at once; the oldest makes room for a new one. Default: 320, 160 on phones.
+	MaxDrops = if isPhone then 160 else 320,
+
+	-- Most marks at once; the one left alone longest makes room for a new one. Default: 1000, 500 on
+	-- phones.
+	MaxMarks = if isPhone then 500 else 1000,
+
 	-- Seconds before a drop that hit nothing is removed. Default: 3.
 	DropLifetime = 3,
 
-	-- Seconds a mark lasts before it fades; each drop that joins it starts the count again. Default: 25.
-	MarkLifetime = 25,
+	-- Seconds a mark lasts before it fades; each drop that joins it starts the count again. Default: 25,
+	-- 15 on phones.
+	MarkLifetime = if isPhone then 15 else 25,
 
 	-- Seconds a mark takes to fade out. Default: 3.
 	MarkFadeTime = 3,
