@@ -197,7 +197,7 @@ function Performance.benchmark(): string
 	params.RespectCanCollide = true
 
 	const debugger = Debugger.new(settings)
-	const pool = Pool.new(world, settings.PoolSize, settings.Color, settings.Material, debugger)
+	const pool = Pool.new(world, settings.PoolSize, settings.Color, settings.Material, "", debugger)
 	const marks = Marks.new(pool, settings, params, debugger)
 	const drops = Drops.new(pool, marks, settings, params, debugger)
 
@@ -361,7 +361,7 @@ function Performance.attachment(): string
 	params.RespectCanCollide = true
 
 	const debugger = Debugger.new(settings)
-	const pool = Pool.new(world, 5000, settings.Color, settings.Material, debugger)
+	const pool = Pool.new(world, 5000, settings.Color, settings.Material, "", debugger)
 	const marks = Marks.new(pool, settings, params, debugger)
 	const drops = Drops.new(pool, marks, settings, params, debugger)
 

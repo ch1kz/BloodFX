@@ -101,6 +101,25 @@ const function slantedMark(): BasePart?
 	return nil
 end
 
+test("the pool draws with Mesh once it has loaded, and with the engine's sphere without one", function()
+	const want = if Config.Mesh ~= "" then "MeshPart" else "Part"
+	const deadline = os.clock() + 5
+	local wrong = -1
+
+	while wrong ~= 0 and os.clock() < deadline do
+		wrong = 0
+
+		for _, part in workspace.BloodFX.Parts:GetChildren() do
+			const right = part.ClassName == want and (want == "Part" or (part :: MeshPart).MeshId == Config.Mesh)
+			if not right then wrong += 1 end
+		end
+
+		if wrong > 0 then task.wait(0.1) end
+	end
+
+	expect(wrong == 0, `{wrong} pooled parts are not {want}s drawn with the Mesh setting`)
+end)
+
 test("every preset sprays", function()
 	for name in Presets do
 		BloodFX.spray(ABOVE, DOWN, name)

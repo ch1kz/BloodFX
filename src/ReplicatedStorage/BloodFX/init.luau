@@ -25,6 +25,7 @@ export type Stats = Types.Stats
 
 const STATIC = table.freeze({
 	DynamicSettings = true,
+	Mesh = true,
 	IgnoreTag = true,
 	AbsorbTag = true,
 	AttachTag = true,
@@ -42,7 +43,7 @@ const root = Instance.new("Folder")
 root.Name = "BloodFX"
 
 const debugger = Debugger.new(settings)
-const pool = Pool.new(root, settings.PoolSize, settings.Color, settings.Material, debugger)
+const pool = Pool.new(root, settings.PoolSize, settings.Color, settings.Material, settings.Mesh, debugger)
 const marks = Marks.new(pool, settings, params, debugger)
 const drops = Drops.new(pool, marks, settings, params, debugger)
 const configuration = if settings.DynamicSettings then Instance.new("Configuration") else nil
@@ -177,7 +178,7 @@ function BloodFX.stats(): Stats
 		marks = #marks.list,
 		emitters = #emitters,
 		parts = pool.total,
-		spare = #pool.idle,
+		spare = pool:spare(),
 	}
 end
 

@@ -5,6 +5,7 @@ export type Config = {
 	PoolSize: number,
 	Color: Color3,
 	Material: Enum.Material,
+	Mesh: string,
 	MaxDrops: number,
 	DropMultiplier: number,
 	MaxMarks: number,

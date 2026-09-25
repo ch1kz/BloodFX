@@ -1,28 +1,35 @@
+const AssetService = game:GetService("AssetService")
+
 const STORAGE = CFrame.new(0, -1e4, 0)
 const RESIZE_BUDGET = 1e-3
 
 local Pool = {}
 Pool.__index = Pool
 
-function Pool.new(parent: Instance, size: number, color: Color3, material: Enum.Material, debugger)
+const function prepare(part: BasePart, color: Color3, material: Enum.Material): BasePart
+	part.Anchored = true
+	part.CanCollide = false
+	part.CanQuery = false
+	part.CanTouch = false
+	part.CastShadow = false
+	part.Massless = true
+	part.Color = color
+	part.Material = material
+	part.CFrame = STORAGE
+
+	return part
+end
+
+function Pool.new(parent: Instance, size: number, color: Color3, material: Enum.Material, mesh: string, debugger)
 	const container = Instance.new("Folder")
 	container.Name = "Parts"
 	container.Parent = parent
 
-	const template = Instance.new("Part")
-	template.Anchored = true
-	template.CanCollide = false
-	template.CanQuery = false
-	template.CanTouch = false
-	template.CastShadow = false
-	template.Massless = true
-	template.Color = color
-	template.Material = material
-	template.CFrame = STORAGE
+	const template = prepare(Instance.new("Part"), color, material)
 
-	const mesh = Instance.new("SpecialMesh")
-	mesh.MeshType = Enum.MeshType.Sphere
-	mesh.Parent = template
+	const sphere = Instance.new("SpecialMesh")
+	sphere.MeshType = Enum.MeshType.Sphere
+	sphere.Parent = template
 
 	const self = setmetatable({
 		container = container,
@@ -31,13 +38,41 @@ function Pool.new(parent: Instance, size: number, color: Color3, material: Enum.
 		size = math.floor(size),
 		total = 0,
 		idle = {} :: { BasePart },
+		retired = {} :: { BasePart },
+		outdated = {} :: { [BasePart]: true },
 	}, Pool)
 
 	for _ = 1, self.size do
 		table.insert(self.idle, self:create())
 	end
 
+	if mesh ~= "" then task.spawn(self.load, self, mesh) end
+
 	return self
+end
+
+function Pool:load(mesh: string)
+	const ok, part = pcall(AssetService.CreateMeshPartAsync, AssetService, Content.fromUri(mesh), {
+		CollisionFidelity = Enum.CollisionFidelity.Box,
+		RenderFidelity = Enum.RenderFidelity.Performance,
+	})
+
+	if not ok then
+		warn(`[BloodFX] could not load Mesh {mesh}, so blood keeps the engine's sphere: {part}`)
+		return
+	end
+
+	self:retemplate(prepare(part, self.template.Color, self.template.Material))
+end
+
+function Pool:retemplate(template: BasePart)
+	self.template:Destroy()
+	self.template = template
+
+	for _, part in self.container:GetChildren() do self.outdated[part] = true end
+
+	table.move(self.idle, 1, #self.idle, #self.retired + 1, self.retired)
+	table.clear(self.idle)
 end
 
 function Pool:create(): BasePart
@@ -48,8 +83,14 @@ function Pool:create(): BasePart
 	return part
 end
 
+function Pool:discard(part: BasePart)
+	self.outdated[part] = nil
+	part:Destroy()
+	self.total -= 1
+end
+
 function Pool:take(): BasePart
-	const part = table.remove(self.idle) or self:expand()
+	const part = table.remove(self.idle) or table.remove(self.retired) or self:expand()
 	part.Transparency = 0
 
 	return part
@@ -63,13 +104,16 @@ function Pool:expand(): BasePart
 end
 
 function Pool:give(part: BasePart)
-	if #self.idle < self.size then
+	if self.outdated[part] or self:spare() >= self.size then
+		self:discard(part)
+	else
 		part.CFrame = STORAGE
 		table.insert(self.idle, part)
-	else
-		part:Destroy()
-		self.total -= 1
 	end
+end
+
+function Pool:spare(): number
+	return #self.idle + #self.retired
 end
 
 function Pool:resize(size: number)
@@ -77,13 +121,15 @@ function Pool:resize(size: number)
 end
 
 function Pool:step()
-	const idle = self.idle
+	const idle, retired = self.idle, self.retired
 	const deadline = os.clock() + RESIZE_BUDGET
 
 	while os.clock() < deadline do
-		if #idle > self.size then
-			table.remove(idle):Destroy()
-			self.total -= 1
+		if self:spare() > self.size then
+			self:discard(table.remove(retired) or table.remove(idle))
+		elseif #retired > 0 then
+			self:discard(table.remove(retired))
+			table.insert(idle, self:create())
 		elseif self.total < self.size then
 			table.insert(idle, self:create())
 		else

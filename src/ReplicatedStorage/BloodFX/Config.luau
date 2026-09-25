@@ -29,6 +29,12 @@ return table.freeze({
 	-- Material of drops and marks. Default: SmoothPlastic.
 	Material = Enum.Material.SmoothPlastic,
 
+	-- Mesh asset that drops and marks are drawn with instead of the engine's sphere, which has 378
+	-- triangles and on a weak graphics chip can take most of the frame. The sphere stands in until the
+	-- mesh has loaded, and for good if it cannot load; "" keeps the sphere. Read once at start.
+	-- Default: "".
+	Mesh = "",
+
 	-- Downward pull on drops, in studs per second squared. Default: 60.
 	Gravity = 60,
 
